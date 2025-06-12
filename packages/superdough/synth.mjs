@@ -297,6 +297,83 @@ export function registerSynthSounds() {
     { prebake: true, type: 'synth' },
   );
 
+  // ---------------------------------------------------------------------------
+  // "organ" - simple additive organ synthesizer
+  // Demonstrates how to register custom synths with multiple oscillators.
+  // Each harmonic is represented by a sine oscillator mixed together with an
+  // amplitude envelope.
+  registerSound(
+    'organ',
+    (begin, value, onended) => {
+      // All WebAudio nodes live on a single AudioContext
+      const ac = getAudioContext();
+
+      // Duration of the note and amplitude of each harmonic partial
+      // By default we use a short array of decreasing amplitudes
+      let { duration, harmonics = [1, 0.5, 0.25, 0.125] } = value;
+
+      // Convert note or midi value into a base frequency in Hz
+      const frequency = getFrequencyFromValue(value);
+
+      const [attack, decay, sustain, release] = getADSRValues(
+        [value.attack, value.decay, value.sustain, value.release],
+        'linear',
+        [0.01, 0.1, 0.8, 0.3],
+      );
+
+      // Calculate important time points for the envelope
+      const holdEnd = begin + duration;
+      const end = holdEnd + release + 0.01;
+
+      // mix collects all oscillator outputs, envGain applies the ADSR envelope
+      const mix = gainNode(1);
+      const envGain = gainNode(1);
+      mix.connect(envGain);
+
+      // Create one sine oscillator per harmonic. Each oscillator is tuned
+      // to a multiple of the base frequency and its level is controlled
+      // by a dedicated gain node. The outputs of all partials are summed
+      // together by connecting them to the `mix` node.
+      const voices = harmonics.map((amp, i) => {
+        const osc = ac.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = frequency * (i + 1); // harmonic multiple
+        const g = gainNode(amp); // amplitude for this partial
+        osc.connect(g).connect(mix);
+        osc.start(begin);
+        return { osc, g };
+      });
+
+      // Apply the ADSR envelope to the overall gain of the mixed signal
+      getParamADSR(envGain.gain, attack, decay, sustain, release, 0, 1, begin, holdEnd, 'linear');
+
+      // Schedule cleanup after the envelope finishes
+      const timeoutNode = webAudioTimeout(
+        ac,
+        () => {
+          voices.forEach(({ osc }) => {
+            osc.disconnect();
+          });
+          mix.disconnect();
+          envGain.disconnect();
+          onended();
+        },
+        begin,
+        end,
+      );
+
+      return {
+        node: envGain,
+        stop: (time) => {
+          // stop() is used when a pattern changes before the envelope ends
+          timeoutNode.stop(time);
+          voices.forEach(({ osc }) => osc.stop(time));
+        },
+      };
+    },
+    { prebake: true, type: 'synth' },
+  );
+
   [...noises].forEach((s) => {
     registerSound(
       s,
