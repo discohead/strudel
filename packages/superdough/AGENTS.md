@@ -249,7 +249,134 @@ export function superdough(value, deadline) {
 }
 ```
 
-### 4. Adding Worklet Processors (7-8 minutes)
+### 4. Working with ZZFX Synths (5-6 minutes)
+
+#### Task Checklist
+- [ ] Understand ZZFX parameter mapping
+- [ ] Create game sound presets
+- [ ] Add new ZZFX-based effects
+- [ ] Test retro sound generation
+- [ ] Document parameter ranges
+
+#### Example: Creating ZZFX Game Sound Presets
+```javascript
+// In zzfx-presets.mjs - create preset library
+export const zzfxPresets = {
+  // Retro game sounds
+  laser: {
+    s: 'z_square',
+    note: 90,
+    slide: -0.3,
+    attack: 0,
+    decay: 0,
+    release: 0.1,
+    duration: 0.1,
+    curve: 0
+  },
+  
+  explosion: {
+    s: 'z_noise',
+    zcrush: 4,
+    decay: 0,
+    release: 0.5,
+    slide: -0.1,
+    tremolo: 0.8,
+    duration: 0.5
+  },
+  
+  powerup: {
+    s: 'z_sawtooth',
+    note: 40,
+    slide: 0.3,
+    zmod: 2,
+    attack: 0.1,
+    release: 0.3,
+    curve: 2,
+    duration: 0.5
+  },
+  
+  hurt: {
+    s: 'z_square',
+    note: 30,
+    zrand: 0.5,
+    znoise: 0.5,
+    attack: 0,
+    release: 0.2,
+    curve: 0,
+    duration: 0.2
+  },
+  
+  jump: {
+    s: 'z_square',
+    note: 50,
+    pitchJump: 12,
+    pitchJumpTime: 0.1,
+    curve: 0,
+    duration: 0.2
+  }
+};
+
+// Register presets as sounds
+export function registerZZFXPresets() {
+  Object.entries(zzfxPresets).forEach(([name, params]) => {
+    registerSound(`zfx_${name}`, (t, value, onended) => {
+      const merged = { ...params, ...value };
+      return getZZFX(merged, t, onended);
+    }, { type: 'zzfx-preset', prebake: true });
+  });
+}
+
+// Usage in patterns
+s("zfx_laser zfx_explosion").speed(0.5)
+s("zfx_powerup").delay(0.5).room(0.3)
+```
+
+#### Creating Custom ZZFX Waveforms
+```javascript
+// Extend ZZFX with custom wave shapes
+function customZZFXWave(name, shapeFunction) {
+  registerSound(`z_${name}`, (t, value, onended) => {
+    // Custom wave generation
+    const samples = generateCustomWave(shapeFunction, value);
+    const buffer = createBufferFromSamples(samples);
+    
+    const source = getAudioContext().createBufferSource();
+    source.buffer = buffer;
+    source.start(t);
+    
+    return {
+      node: source,
+      stop: () => source.stop()
+    };
+  }, { type: 'zzfx-custom', prebake: true });
+}
+
+// Example: Pulse width modulation wave
+customZZFXWave('pwm', (phase, params) => {
+  const { pw = 0.5, pwrate = 0 } = params;
+  const modulated = pw + Math.sin(phase * pwrate) * 0.3;
+  return phase % 1 < modulated ? 1 : -1;
+});
+```
+
+#### ZZFX Parameter Animation
+```javascript
+// Animate ZZFX parameters over time
+const animatedLaser = note("c4")
+  .s("z_square")
+  .slide(sine.range(-0.5, -0.1))
+  .zmod(saw.range(0, 3))
+  .curve(square.range(0, 2))
+  .duration(0.2);
+
+// Morphing between ZZFX sounds
+const morph = s("z_square z_sawtooth z_tan z_noise")
+  .zrand("<0 0.2 0.5 1>")
+  .znoise("<0 0.1 0.3 0.5>")
+  .duration(0.5);
+```
+
+### 5. Adding Worklet Processors (7-8 minutes)
 
 #### Task Checklist
 - [ ] Write AudioWorkletProcessor
@@ -322,7 +449,111 @@ if (value.crush !== undefined) {
 }
 ```
 
+## ZZFX-Specific Guidelines
+
+### ZZFX Parameter Reference
+```javascript
+// ZZFX uses a 20-parameter array internally:
+const zzfxParams = [
+  volume,         // 0: Volume (0-1)
+  randomness,     // 1: Frequency randomness (zrand)
+  frequency,      // 2: Base frequency in Hz
+  attack,         // 3: Attack time (seconds)
+  sustain,        // 4: Sustain time (seconds)
+  release,        // 5: Release time (seconds)
+  shape,          // 6: Wave shape (0-4)
+  shapeCurve,     // 7: Curve amount (0=square wave)
+  slide,          // 8: Frequency slide
+  deltaSlide,     // 9: Slide acceleration
+  pitchJump,      // 10: Pitch jump amount
+  pitchJumpTime,  // 11: Time to pitch jump
+  repeatTime,     // 12: LFO/repeat time
+  noise,          // 13: Noise amount (znoise)
+  modulation,     // 14: Ring mod amount (zmod)
+  bitCrush,       // 15: Bit crush (zcrush)
+  delay,          // 16: Delay amount (zdelay)
+  sustainVolume,  // 17: Sustain volume level
+  decay,          // 18: Decay time
+  tremolo         // 19: Tremolo amount
+];
+
+// Shape values:
+// 0 = sine
+// 1 = triangle
+// 2 = sawtooth
+// 3 = tan
+// 4 = noise
+```
+
+### ZZFX Sound Design Tips
+1. **Start Simple**: Begin with basic waveform and add effects
+2. **Envelope First**: Set ADSR before adding modulation
+3. **Subtle Randomness**: Small zrand values (0.01-0.1) add life
+4. **Curve Control**: Use curve=0 for pure square waves
+5. **Pitch Effects**: Combine slide and pitchJump for complex movements
+6. **Bit Crushing**: Lower values = more distortion (1-16)
+
+### Common ZZFX Patterns
+```javascript
+// Chiptune bass
+s("z_square")
+  .note("c2 c2 g2 c3")
+  .curve(0)
+  .attack(0)
+  .decay(0.01)
+  .sustain(0.9)
+  .release(0.01)
+
+// Glitch percussion
+s("z_noise")
+  .zcrush("<1 4 8 16>")
+  .zmod("<0 1 2 3>")
+  .duration(0.05)
+
+// Sci-fi ambience
+s("z_tan")
+  .note(30)
+  .zrand(0.3)
+  .znoise(0.5)
+  .tremolo(0.2)
+  .lfo(0.5)
+  .attack(0.5)
+  .release(1)
+  .duration(2)
+```
+
 ## Testing Strategies
+
+### ZZFX Testing Patterns
+```javascript
+describe('zzfx synthesis', () => {
+  it('generates correct waveform shape', () => {
+    const samples = buildSamples(
+      1,    // volume
+      0,    // randomness
+      440,  // frequency
+      0,    // attack
+      0.1,  // sustain
+      0,    // release
+      0,    // shape (sine)
+      1     // curve
+    );
+    
+    // Test first cycle is sine-like
+    expect(samples[0]).toBe(0);
+    expect(samples[Math.floor(samples.length/4)]).toBeCloseTo(1, 1);
+  });
+  
+  it('applies bit crushing correctly', () => {
+    const params = { s: 'z_square', zcrush: 4 };
+    const processed = getZZFX(params, 0);
+    
+    // Verify bit depth reduction
+    const uniqueValues = new Set(processed.samples);
+    expect(uniqueValues.size).toBeLessThan(256);
+  });
+});
+```
 
 ### Unit Test Patterns
 ```javascript

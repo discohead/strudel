@@ -54,8 +54,130 @@ const synths = [
   'white', 'pink',       // Noise generators
   'fm',                  // FM synthesis
   'csine', 'ctriangle',  // Cheap oscillators
+  
+  // ZZFX synths - micro sound generator synths
+  'zzfx',                // Direct ZZFX parameter control
+  'z_sine',              // ZZFX sine wave
+  'z_sawtooth',          // ZZFX sawtooth wave
+  'z_triangle',          // ZZFX triangle wave
+  'z_square',            // ZZFX square wave
+  'z_tan',               // ZZFX tan wave (unique harsh sound)
+  'z_noise',             // ZZFX noise generator
 ];
 ```
+
+### ZZFX Integration
+ZZFX is a micro JavaScript sound generator (by KilledByAPixel) integrated into superdough for creating retro game sounds and effects.
+
+#### ZZFX Sound Types
+```javascript
+// Basic ZZFX waveforms
+s("z_sine").note(60).duration(0.5)     // Smooth sine
+s("z_square").note(60).duration(0.5)   // Classic chiptune square
+s("z_sawtooth").note(60).duration(0.5) // Buzzy sawtooth
+s("z_triangle").note(60).duration(0.5) // Soft triangle
+s("z_tan").note(60).duration(0.5)      // Harsh/metallic tan wave
+s("z_noise").duration(0.5)             // White noise
+```
+
+#### ZZFX Parameters
+```javascript
+// ZZFX-specific parameters for sound design
+superdough({
+  s: 'z_square',
+  note: 60,
+  
+  // ZZFX envelope (ADSR-like)
+  attack: 0.01,        // Attack time (0-1)
+  decay: 0.1,          // Decay time (0-1) 
+  sustain: 0.5,        // Sustain level (0-1)
+  release: 0.1,        // Release time (0-1)
+  duration: 0.5,       // Total duration
+  
+  // ZZFX modulation
+  zrand: 0.1,          // Random frequency variation (0-1)
+  znoise: 0.2,         // Frequency noise/fog amount
+  zmod: 0.5,           // Ring modulation amount
+  tremolo: 0.3,        // Amplitude modulation
+  lfo: 0,              // LFO/repeat time (also: repeatTime)
+  
+  // ZZFX pitch effects
+  slide: 0.1,          // Pitch slide amount
+  deltaSlide: 0,       // Slide acceleration
+  pitchJump: 0,        // Pitch jump amount
+  pitchJumpTime: 0,    // When to jump pitch
+  
+  // ZZFX processing
+  curve: 1,            // Wave shaping (0=square, 1=normal, 2+=pointy)
+  zcrush: 8,           // Bit crush amount (1-16 bits)
+  zdelay: 0.1,         // Feedback delay amount
+  
+  // Direct ZZFX array (overrides other params)
+  zzfx: [0.5, 0, 440, 0.01, 0.3, 0.1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 0, 0]
+}, when);
+```
+
+#### ZZFX Sound Design Examples
+```javascript
+// Laser shot
+s("z_square")
+  .note(90)
+  .slide(-0.3)
+  .attack(0)
+  .decay(0)
+  .release(0.1)
+  .duration(0.1)
+
+// Explosion
+s("z_noise")
+  .zcrush(4)
+  .decay(0)
+  .release(0.5)
+  .slide(-0.1)
+  .duration(0.5)
+
+// Coin pickup
+s("z_square")
+  .note("c5 g5")
+  .attack(0)
+  .decay(0.01)
+  .sustain(0.1)
+  .release(0.05)
+  .duration(0.1)
+
+// Powerup
+s("z_sawtooth")
+  .note(40)
+  .slide(0.2)
+  .zmod(2)
+  .attack(0.1)
+  .release(0.3)
+  .duration(0.5)
+
+// Retro jump
+s("z_square")
+  .note(50)
+  .pitchJump(12)
+  .pitchJumpTime(0.1)
+  .curve(0)
+  .duration(0.2)
+
+// Alien voice
+s("z_tan")
+  .note(60)
+  .zrand(0.5)
+  .znoise(0.3)
+  .tremolo(0.5)
+  .lfo(8)
+  .duration(1)
+```
+
+#### ZZFX Implementation Details
+- Uses `buildSamples()` from `zzfx_fork.mjs` to generate audio samples
+- Samples are created on-demand and loaded into Web Audio buffers
+- All ZZFX synths are registered with `prebake: true` for performance
+- Parameter mapping converts Strudel values to ZZFX's 20-parameter array
+- Wave shape is determined by the `z_*` sound name or `shape` parameter
 
 ## Common Usage Patterns
 
