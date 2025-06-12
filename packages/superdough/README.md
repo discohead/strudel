@@ -177,6 +177,9 @@ registerSynthSounds();
 
 // the organ synth is registered automatically and can be played like this
 superdough({ s: 'organ', note: 'c4', duration: 1 }, 0);
+
+// a 4 operator FM voice is also available
+superdough({ s: 'fm4', note: 'c4', duration: 1 }, 0);
 ```
 
 ## Credits

@@ -374,6 +374,86 @@ export function registerSynthSounds() {
     { prebake: true, type: 'synth' },
   );
 
+  // ---------------------------------------------------------------------------
+  // "fm4" - basic algorithm-less 4 operator FM synth
+  registerSound(
+    'fm4',
+    (begin, value, onended) => {
+      const ac = getAudioContext();
+      const frequency = getFrequencyFromValue(value);
+      const {
+        duration,
+        ratios = [1, 1, 1, 1],
+        amps = [0, 0, 0, 1],
+        matrix = [
+          [0, 1, 0, 0],
+          [0, 0, 1, 0],
+          [0, 0, 0, 1],
+          [0, 0, 0, 0],
+        ],
+      } = value;
+
+      const [attack, decay, sustain, release] = getADSRValues(
+        [value.attack, value.decay, value.sustain, value.release],
+        'linear',
+        [0.01, 0.1, 0.8, 0.3],
+      );
+
+      const holdEnd = begin + duration;
+      const end = holdEnd + release + 0.01;
+
+      const mix = gainNode(1);
+      const ops = [];
+
+      for (let i = 0; i < 4; i++) {
+        const osc = ac.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = frequency * (ratios[i] ?? 1);
+        const amp = gainNode(amps[i] ?? 0);
+        osc.connect(amp).connect(mix);
+        osc.start(begin);
+        ops[i] = { osc, amp };
+      }
+
+      // connect modulation matrix
+      for (let m = 0; m < 4; m++) {
+        for (let c = 0; c < 4; c++) {
+          const index = matrix[m]?.[c];
+          if (index) {
+            const g = gainNode(frequency * (ratios[c] ?? 1) * index);
+            ops[m].osc.connect(g).connect(ops[c].osc.frequency);
+          }
+        }
+      }
+
+      const envGain = gainNode(1);
+      mix.connect(envGain);
+
+      getParamADSR(envGain.gain, attack, decay, sustain, release, 0, 1, begin, holdEnd, 'linear');
+
+      const timeoutNode = webAudioTimeout(
+        ac,
+        () => {
+          ops.forEach(({ osc }) => osc.disconnect());
+          mix.disconnect();
+          envGain.disconnect();
+          onended();
+        },
+        begin,
+        end,
+      );
+
+      return {
+        node: envGain,
+        stop: (time) => {
+          timeoutNode.stop(time);
+          ops.forEach(({ osc }) => osc.stop(time));
+        },
+      };
+    },
+    { prebake: true, type: 'synth' },
+  );
+
   [...noises].forEach((s) => {
     registerSound(
       s,
