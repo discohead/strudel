@@ -1,0 +1,34 @@
+---
+title: Creating a Custom Synth
+layout: ../../layouts/MainLayout.astro
+---
+
+import { JsDoc } from '../../docs/JsDoc';
+
+# Custom synth with superdough
+
+This guide shows how to extend **superdough** with your own synthesiser. The example below registers a simple additive ``organ`` synth that mixes several sine oscillators.
+
+```javascript
+import { registerSynthSounds } from 'superdough';
+
+registerSynthSounds(); // default synths
+
+// register the organ instrument
+```
+import { registerSound } from 'superdough';
+
+registerSound('organ', (start, params, onended) => {
+  // custom implementation as shown in packages/superdough/synth.mjs
+});
+```
+
+Once registered you can use it in patterns:
+
+```javascript
+note('c3 e3 g3').s('organ')
+```
+
+The implementation lives in `packages/superdough/synth.mjs` and is heavily commented for educational purposes.
+
+<JsDoc client:idle name="registerSound" h={0} />

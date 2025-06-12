@@ -24,6 +24,8 @@
         superdough({ s: 'hh' }, t + 0.25);
         superdough({ s: 'sd', room: 0.5 }, t + 0.5);
         superdough({ s: 'hh' }, t + 0.75);
+        // play custom organ synth
+        superdough({ s: 'organ', note: 'c4', duration: 1 }, t + 1);
       };
 
       document.getElementById('play').addEventListener('click', async () => {
