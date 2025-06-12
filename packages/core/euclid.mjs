@@ -147,6 +147,50 @@ export const { euclidrot, euclidRot } = register(['euclidrot', 'euclidRot'], fun
 });
 
 /**
+ * Like `euclidRot`, but has an additional parameter for adding padding steps to the end of the pattern.
+ * This can be useful to break up the regularity of an Euclidean pattern and group triggers.
+ * Note: rotation is applied after padding, so the padding is also rotated.
+ * @memberof Pattern
+ * @name euclidRotPad
+ * @param {number} pulses the number of onsets / beats
+ * @param {number} steps the number of steps to fill
+ * @param {number} rotation offset in steps (applied after padding)
+ * @param {number} pad number of steps to add to the end
+ * @param {number|string} [padValue=0] value to use for padding (defaults to 0)
+ * @returns Pattern
+ * @example
+ * // Add 2 empty steps at the end before rotating
+ * note("c3").euclidRotPad(3,8,2,2)
+ * @example
+ * // Add 3 steps with value 1 at the end before rotating
+ * note("c3").euclidRotPad(3,8,2,3,1)
+ * @example
+ * // Add 2 steps with string value at the end
+ * s("bd").euclidRotPad(3,8,1,2,"hh")
+ */
+
+const _euclidRotPad = function (pulses, steps, rotation, pad, padValue = 0) {
+  const b = bjork(pulses, steps);
+  // Add padding to the end of the pattern with specified value
+  const padded = pad > 0 ? b.concat(Array(pad).fill(padValue)) : b;
+  // Apply rotation after padding
+  if (rotation) {
+    return rotate(padded, -rotation);
+  }
+  return padded;
+};
+
+export const { euclidrotpad, euclidRotPad } = register(['euclidrotpad', 'euclidRotPad'], function (pulses, steps, rotation, pad, padValue, pat) {
+  // Handle optional padValue parameter
+  if (typeof padValue === 'object' && padValue._Pattern) {
+    // padValue was omitted, so pat is actually in padValue position
+    pat = padValue;
+    padValue = 0;
+  }
+  return pat.struct(_euclidRotPad(pulses, steps, rotation, pad, padValue));
+});
+
+/**
  * Similar to `euclid`, but each pulse is held until the next pulse,
  * so there will be no gaps.
  * @name euclidLegato
@@ -188,4 +232,48 @@ export const euclidLegato = register(['euclidLegato'], function (pulses, steps, 
  */
 export const euclidLegatoRot = register(['euclidLegatoRot'], function (pulses, steps, rotation, pat) {
   return _euclidLegato(pulses, steps, rotation, pat);
+});
+
+/**
+ * Similar to `euclidLegatoRot`, but has an additional parameter for adding padding steps to the end of the pattern.
+ * Each pulse is held until the next pulse (legato), with padding applied before rotation.
+ * @name euclidLegatoRotPad
+ * @memberof Pattern
+ * @param {number} pulses the number of onsets / beats
+ * @param {number} steps the number of steps to fill
+ * @param {number} rotation offset in steps (applied after padding)
+ * @param {number} pad number of steps to add to the end
+ * @param {number|string} [padValue=0] value to use for padding (defaults to 0)
+ * @example
+ * note("c3").euclidLegatoRotPad(3,8,2,2)
+ * @example
+ * // Pad with 1s instead of 0s
+ * note("c3").euclidLegatoRotPad(3,8,2,2,1)
+ * @example
+ * // Pad with string values
+ * s("bd").euclidLegatoRotPad(3,8,1,2,"hh")
+ */
+
+const _euclidLegatoPad = function (pulses, steps, rotation, pad, padValue = 0, pat) {
+  if (pulses < 1) {
+    return silence;
+  }
+  // Use the padded euclidean pattern
+  const bin_pat = _euclidRotPad(pulses, steps, rotation, pad, padValue);
+  const gapless = bin_pat
+    .join('')
+    .split('1')
+    .slice(1)
+    .map((s) => [s.length + 1, true]);
+  return pat.struct(timeCat(...gapless));
+};
+
+export const euclidLegatoRotPad = register(['euclidLegatoRotPad'], function (pulses, steps, rotation, pad, padValue, pat) {
+  // Handle optional padValue parameter
+  if (typeof padValue === 'object' && padValue._Pattern) {
+    // padValue was omitted, so pat is actually in padValue position
+    pat = padValue;
+    padValue = 0;
+  }
+  return _euclidLegatoPad(pulses, steps, rotation, pad, padValue, pat);
 });
