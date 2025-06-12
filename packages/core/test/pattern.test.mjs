@@ -21,6 +21,11 @@ import {
   cat,
   sequence,
   palindrome,
+  mirror,
+  jitter,
+  drunk,
+  hocket,
+  swirl,
   polymeter,
   polyrhythm,
   silence,
@@ -599,6 +604,61 @@ describe('Pattern', () => {
           .sort((a, b) => a.part.begin.sub(b.part.begin))
           .map((a) => a.value),
       ).toStrictEqual(['a', 'b', 'c', 'c', 'b', 'a']);
+    });
+  });
+
+  describe('mirror()', () => {
+    it('concatenates the pattern with its reverse', () => {
+      expect(
+        fastcat('a', 'b', 'c')
+          .mirror()
+          .firstCycle()
+          .sort((a, b) => a.part.begin.sub(b.part.begin))
+          .map((a) => a.value),
+      ).toStrictEqual(['a', 'b', 'c', 'c', 'b', 'a']);
+    });
+  });
+
+  describe('jitter()', () => {
+    it('amount zero returns same pattern', () => {
+      expect(
+        fastcat('a', 'b')
+          .jitter(0)
+          .firstCycle()
+          .map((h) => h.value),
+      ).toStrictEqual(['a', 'b']);
+    });
+  });
+
+  describe('drunk()', () => {
+    it('step zero leaves pattern unchanged', () => {
+      expect(
+        fastcat(0, 1)
+          .drunk(0)
+          .firstCycle()
+          .map((h) => h.value),
+      ).toStrictEqual([0, 1]);
+    });
+  });
+
+  describe('hocket()', () => {
+    it('alternates two patterns', () => {
+      expect(
+        hocket(fastcat('a', 'a'), fastcat('b', 'b'))
+          .firstCycle()
+          .map((h) => h.value),
+      ).toStrictEqual(['a', 'b', 'a', 'b']);
+    });
+  });
+
+  describe('swirl()', () => {
+    it('rotations 1 returns same pattern', () => {
+      expect(
+        fastcat('a', 'b')
+          .swirl(1)
+          .firstCycle()
+          .map((h) => h.value),
+      ).toStrictEqual(['a', 'b']);
     });
   });
   describe('polyrhythm()', () => {

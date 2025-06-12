@@ -2270,6 +2270,99 @@ export const palindrome = register(
   true,
 );
 
+/** Concatenates a pattern with its reversed version, creating a mirrored cycle.
+ * @name mirror
+ * @memberof Pattern
+ * @returns Pattern
+ * @example
+ * "0 1 2".mirror()
+ * // => "0 1 2 2 1 0"
+ */
+export const mirror = register('mirror', function (pat) {
+  pat = reify(pat);
+  return fastcat(pat, pat.rev());
+});
+
+Pattern.prototype.mirror = function () {
+  return mirror(this);
+};
+
+/** Randomly shifts each event forward or backward in time by up to the given
+ * amount of cycles.
+ * @name jitter
+ * @memberof Pattern
+ * @param {number} amount maximum shift in cycles
+ * @returns Pattern
+ * @example
+ * s("bd sd").jitter(1/8)
+ */
+export const jitter = register('jitter', function (amount, pat) {
+  amount = Fraction(amount);
+  return pat.withHapTime((t) => t.add(Fraction(amount.mul(2).valueOf() * Math.random()).sub(amount)));
+});
+
+Pattern.prototype.jitter = function (amount) {
+  return jitter(amount, this);
+};
+
+/** Randomly adds or subtracts the given step amount to each value, creating a
+ * wandering pattern. Works best with numeric patterns.
+ * @name drunk
+ * @memberof Pattern
+ * @param {number} step size of each random step
+ * @returns Pattern
+ * @example
+ * n("0 2 4 5").drunk(1).scale("C major")
+ */
+export const drunk = register('drunk', function (step, pat) {
+  step = Fraction(step);
+  return pat.withValue((v) => {
+    if (typeof v !== 'number') return v;
+    const dir = Math.random() < 0.5 ? -1 : 1;
+    return v + dir * step.valueOf();
+  });
+});
+
+Pattern.prototype.drunk = function (step) {
+  return drunk(step, this);
+};
+
+/** Alternates events from two patterns so they play in quick succession.
+ * @name hocket
+ * @memberof Pattern
+ * @param {Pattern} a first pattern
+ * @param {Pattern} b second pattern
+ * @returns Pattern
+ * @example
+ * hocket("bd bd", "sd sd")
+ */
+export const hocket = register('hocket', function (a, b) {
+  return stack(reify(a).mask('<1 0>'), reify(b).mask('<0 1>'));
+});
+
+Pattern.prototype.hocket = function (b) {
+  return hocket(this, b);
+};
+
+/** Rotates the starting point a little further each cycle, creating a swirling
+ * effect.
+ * @name swirl
+ * @memberof Pattern
+ * @param {number} rotations how many rotations to complete over one cycle
+ * @returns Pattern
+ * @example
+ * "0 1 2 3".swirl(4)
+ */
+export const swirl = register('swirl', function (rotations, pat) {
+  rotations = Fraction(rotations);
+  const parts = listRange(0, rotations.sub(1)).map((i) => pat.early(Fraction(i).div(rotations)));
+  return stack(...parts)._fast(rotations);
+});
+
+Pattern.prototype.swirl = function (rotations) {
+  return swirl(rotations, this);
+};
+
 /**
  * Jux with adjustable stereo width. 0 = mono, 1 = full stereo.
  * @name juxBy
