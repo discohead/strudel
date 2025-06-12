@@ -1,0 +1,226 @@
+# Adding Pattern Functions - Workflow Rules
+
+## Step 1: Define the Function
+**✅ ALWAYS start in the appropriate package**
+```javascript
+// packages/core/pattern.mjs for core patterns
+// packages/tonal/tonal.mjs for music theory
+// packages/xen/xen.mjs for microtonal
+
+/**
+ * Rotates a pattern by the given amount
+ * @param {number} amount - Rotation amount (0-1)
+ * @param {Pattern} pat - Pattern to rotate
+ * @returns {Pattern} Rotated pattern
+ * @example
+ * rotate(0.25, "c d e f") // => "f c d e"
+ * @synonyms rot
+ */
+export const rotate = register('rotate', function(amount, pat) {
+  // 1. Reify pattern input
+  pat = reify(pat);
+  
+  // 2. Validate/convert parameters
+  amount = Fraction(amount);
+  
+  // 3. Return new pattern with transformation
+  return pat.withTime(t => t.add(amount));
+});
+```
+
+## Step 2: Add Method Form
+**✅ ALWAYS add instance method after function**
+```javascript
+// Add method to Pattern prototype
+Pattern.prototype.rotate = function(amount) {
+  // Delegate to registered function
+  return rotate(amount, this);
+};
+```
+
+## Step 3: Export from Package
+**✅ ALWAYS export from package index**
+```javascript
+// packages/core/index.mjs
+export { rotate } from './pattern.mjs';
+
+// This makes it available for:
+import { rotate } from '@strudel/core';
+```
+
+## Step 4: Write Tests
+**✅ ALWAYS add comprehensive tests**
+```javascript
+// packages/core/test/pattern.test.mjs
+describe('rotate', () => {
+  // Basic functionality
+  it('rotates pattern forward', () => {
+    const result = rotate(0.25, sequence('a', 'b', 'c', 'd'));
+    expect(result.firstCycle()).toMatchSnapshot();
+  });
+  
+  // Edge cases
+  it('handles rotation > 1', () => {
+    const result = rotate(1.25, sequence('a', 'b'));
+    const expected = rotate(0.25, sequence('a', 'b'));
+    sameFirst(result, expected);
+  });
+  
+  // Negative values
+  it('handles negative rotation', () => {
+    const result = rotate(-0.25, sequence('a', 'b', 'c', 'd'));
+    expect(result.firstCycle()).toMatchSnapshot();
+  });
+  
+  // Method form
+  it('works as method', () => {
+    const result = sequence('a', 'b').rotate(0.5);
+    expect(result.firstCycle()).toMatchSnapshot();
+  });
+  
+  // With strings
+  it('works with mini notation', () => {
+    const result = rotate(0.25, "a b c d");
+    expect(result.firstCycle()).toMatchSnapshot();
+  });
+});
+```
+
+## Step 5: Add to Mini Notation (Optional)
+**✅ IF adding operator, update grammar**
+```pegjs
+// packages/mini/krill.pegjs
+
+// Add to operator list
+operator = stretch / fast / slow / rotate
+
+// Define operator syntax
+rotate = "~>" _ amount:number {
+  return {
+    type_: 'rotate',
+    arguments_: { amount }
+  };
+}
+```
+
+**✅ THEN implement in mini.mjs**
+```javascript
+// packages/mini/mini.mjs
+case 'rotate': {
+  const { amount } = op.arguments_;
+  pat = pat.rotate(amount);
+  break;
+}
+```
+
+**✅ THEN rebuild parser**
+```bash
+cd packages/mini
+pnpm run build:parser
+```
+
+## Step 6: Update Documentation
+**✅ ALWAYS ensure JSDoc is complete**
+- Description of what it does
+- All parameters with types
+- Return type
+- At least one example
+- Synonyms if applicable
+
+## Step 7: Add Integration Tests
+**✅ ALWAYS test with other patterns**
+```javascript
+// test/examples.test.mjs
+it('rotate with stack', () => {
+  const pattern = stack(
+    "c3 e3 g3".rotate(0.125),
+    "c4 e4".rotate(-0.125)
+  );
+  expect(pattern.firstCycle()).toMatchSnapshot();
+});
+```
+
+## Step 8: Performance Verification
+**✅ IF performance-critical, add benchmark**
+```javascript
+// bench/pattern.bench.mjs
+bench('rotate performance', () => {
+  const pat = sequence(...Array(100).fill('a'));
+  pat.rotate(0.33).queryArc(0, 100);
+});
+```
+
+## Common Patterns to Follow
+
+### For Time Transformations
+```javascript
+export const myTimeTransform = register('myTimeTransform', 
+  curry((param, pat) => {
+    pat = reify(pat);
+    param = Fraction(param);
+    
+    return new Pattern((state) => {
+      // Transform query time
+      const newState = state.setSpan(
+        state.span.withTime(t => /* transform t */)
+      );
+      
+      // Query with transformed time
+      return this.query(newState).map(hap =>
+        // Transform hap times back
+        hap.withTime(t => /* inverse transform */)
+      );
+    });
+  })
+);
+```
+
+### For Value Transformations
+```javascript
+export const myValueTransform = register('myValueTransform',
+  curry((param, pat) => {
+    pat = reify(pat);
+    
+    return pat.withValue(value => {
+      // Transform the value
+      return transformValue(value, param);
+    });
+  })
+);
+```
+
+### For Structure Transformations
+```javascript
+export const myStructTransform = register('myStructTransform',
+  curry((param, pat) => {
+    pat = reify(pat);
+    
+    return new Pattern((state) => {
+      const haps = pat.query(state);
+      
+      // Transform structure (add/remove/modify haps)
+      return transformHaps(haps, param);
+    });
+  })
+);
+```
+
+## Checklist Before Committing
+- [ ] Function has JSDoc with @example
+- [ ] Function is registered with register()
+- [ ] Method form added to Pattern.prototype
+- [ ] Exported from package index
+- [ ] Tests cover basic usage
+- [ ] Tests cover edge cases
+- [ ] Tests use snapshots for complex output
+- [ ] Works with mini notation strings
+- [ ] Performance impact considered
+- [ ] No breaking changes to existing patterns
+
+## Enforcement Rules
+- Pattern functions must use register()
+- Must have both function and method forms
+- Must call reify() on pattern inputs
+- Must use curry() for multi-argument functions
+- Must have tests with snapshots
+- Must preserve pattern immutability

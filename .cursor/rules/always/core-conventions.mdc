@@ -1,0 +1,137 @@
+# Core Conventions - Strudel Codebase
+
+## Module Structure
+All Strudel packages use ES modules with .mjs extension:
+
+**✅ ALWAYS use .mjs extension for JavaScript files**
+```javascript
+// Good - ES modules with .mjs
+import { Pattern } from '@strudel/core';
+import Fraction from '@strudel/core/fraction.mjs';
+export { pattern, stack, sequence };
+```
+
+**❌ NEVER use .js extension or CommonJS**
+```javascript
+// Bad - CommonJS or .js files
+const { Pattern } = require('@strudel/core');
+module.exports = { pattern };
+```
+
+## License Headers
+**✅ ALWAYS include AGPL-3.0 license header in every source file**
+```javascript
+/*
+filename.mjs - <short description>
+Copyright (C) 2022 Strudel contributors - see <https://github.com/tidalcycles/strudel/blob/main/packages/...>
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+*/
+```
+
+## Import Organization
+**✅ ALWAYS organize imports in this order**
+1. External dependencies
+2. Core Strudel packages
+3. Local imports
+
+```javascript
+// External
+import Fraction from 'fraction.js';
+
+// Strudel packages
+import { Pattern, reify } from '@strudel/core';
+
+// Local
+import { parseRhythm } from './rhythm.mjs';
+```
+
+## Export Patterns
+**✅ ALWAYS use named exports for functions**
+```javascript
+export const fast = (factor, pat) => pat.fast(factor);
+export { sequence, stack, slowcat };
+```
+
+**✅ ALWAYS export default for main class/value**
+```javascript
+export default Pattern;
+```
+
+## Package Dependencies
+**✅ ALWAYS use workspace protocol for internal deps**
+```json
+{
+  "dependencies": {
+    "@strudel/core": "workspace:*"
+  }
+}
+```
+
+## File Naming
+**✅ ALWAYS use lowercase with hyphens**
+- `pattern-utils.mjs`
+- `time-span.mjs`
+- `krill-parser.mjs`
+
+**❌ NEVER use camelCase or underscores in filenames**
+- `patternUtils.mjs` ❌
+- `pattern_utils.mjs` ❌
+
+## Code Style
+**✅ ALWAYS use 2-space indentation**
+**✅ ALWAYS use single quotes for strings**
+**✅ ALWAYS add trailing commas in multiline structures**
+**✅ ALWAYS use semicolons**
+
+```javascript
+const pattern = sequence(
+  'a',
+  'b',
+  'c', // trailing comma
+);
+```
+
+## Error Messages
+**✅ ALWAYS provide clear, actionable error messages**
+```javascript
+throw new Error(`mini: ${funcName}: expected ${expected} but got ${actual}`);
+```
+
+**❌ NEVER throw generic errors**
+```javascript
+throw new Error('Invalid input'); // Too vague
+```
+
+## Documentation
+**✅ ALWAYS add JSDoc to public APIs**
+```javascript
+/**
+ * Speeds up a pattern by the given factor
+ * @param {number} factor - Speed multiplier
+ * @param {Pattern} pat - Pattern to transform
+ * @returns {Pattern} Transformed pattern
+ * @example
+ * fast(2, "c3 e3 g3") // plays twice as fast
+ */
+export const fast = (factor, pat) => pat.fast(factor);
+```
+
+**✅ ALWAYS include @example in JSDoc**
+**✅ ALWAYS mark internal methods with @noAutocomplete**
+
+## Testing Convention
+**✅ ALWAYS colocate tests with source**
+```
+packages/core/
+├── pattern.mjs
+└── test/
+    └── pattern.test.mjs
+```
+
+**✅ ALWAYS use .test.mjs suffix for test files**
+
+## Enforcement Rules
+- Files matching `packages/**/*.mjs` must have AGPL-3.0 header
+- Files matching `packages/**/*.mjs` must use ES module syntax
+- Files matching `packages/*/test/*.mjs` must import from 'vitest'
+- Files matching `packages/*/package.json` must use workspace:* for @strudel/* deps

@@ -1,0 +1,193 @@
+# Mini Notation - Component Rules
+
+## String Pattern Parsing
+**✅ ALWAYS auto-parse strings as mini notation**
+```javascript
+// These are equivalent
+"c3 eb3 g3"
+mini('c3 eb3 g3')
+sequence('c3', 'eb3', 'g3')
+
+// Works with pattern methods
+"c3 eb3 g3".fast(2).rev()
+```
+
+## Mini Notation Syntax Rules
+**✅ ALWAYS follow precedence rules**
+```javascript
+// Precedence (highest to lowest):
+// 1. Parentheses/brackets
+// 2. Modifiers (*, /, @, ?, !)
+// 3. Stack (,)
+// 4. Sequence (space)
+// 5. Alternate (< >)
+
+"a b*2"     // b repeats, not "a b"
+"[a b]*2"   // Group repeats
+"a,b c"     // Stack a,b then c
+"<a b> c"   // Alternate then c
+```
+
+## Sequence Patterns
+**✅ ALWAYS use spaces to separate sequence elements**
+```javascript
+// Good - Clear sequences
+"bd sd bd sd"
+"c3 e3 g3 c4"
+
+// Bad - Unclear
+"bdsdbdsd"  // Single element "bdsdbdsd"
+```
+
+**✅ ALWAYS use brackets for subsequences**
+```javascript
+"a [b c]"   // b and c share second half
+"a [b [c d]]" // Nested subsequences
+```
+
+## Stack Patterns
+**✅ ALWAYS use commas for parallel events**
+```javascript
+"[c3,e3,g3]"       // Chord
+"[bd,hh*8]"        // Kick with hi-hats
+"[bd sd,hh*4]"     // Kick-snare with hi-hats
+```
+
+## Modifier Syntax
+**✅ ALWAYS apply modifiers correctly**
+```javascript
+// Repeat - multiply pattern
+"a*3"        // a a a
+"[a b]*2"    // a b a b
+
+// Elongate - stretch duration
+"a/2"        // Hold for 2 steps
+"[a b]/4"    // Stretch over 4 steps
+
+// Weight - duration weight
+"a@3 b"      // a gets 3x duration of b
+```
+
+## Euclidean Rhythms
+**✅ ALWAYS use proper euclidean syntax**
+```javascript
+"bd(3,8)"      // 3 hits over 8 steps
+"sd(5,8,2)"    // 5 hits, 8 steps, rotate by 2
+"hh(7,16,3)"   // 7 hits, 16 steps, rotate by 3
+```
+
+**❌ NEVER use invalid euclidean parameters**
+```javascript
+"bd(8,3)"      // ❌ Pulses > steps
+"bd(3.5,8)"    // ❌ Non-integer values
+```
+
+## Alternation Patterns
+**✅ ALWAYS use angle brackets for per-cycle alternation**
+```javascript
+"<a b c>"      // Different each cycle: a, b, c, a...
+"<a b> <c d>"  // Two independent alternations
+"bd <sd cp>"   // Kick with alternating snare/clap
+```
+
+## Random Patterns
+**✅ ALWAYS use ? for random drop**
+```javascript
+"a? b c?"      // Maybe play a and c
+"bd? [sd cp?]" // Maybe kick, maybe clap in snare group
+```
+
+**✅ ALWAYS use ! for replication**
+```javascript
+"a!"          // Play on every subdivision
+"[a b]!"      // Replicate group
+```
+
+## Sample Selection
+**✅ ALWAYS use colon for variants**
+```javascript
+"bd:0 bd:1 bd:2"    // Different bass drum samples
+"piano:4"           // Fifth piano sample
+"hh:0 hh:2 hh:1"    // Varied hi-hat samples
+```
+
+## Special Symbols
+**✅ ALWAYS use ~ for silence**
+```javascript
+"bd ~ sd ~"         // Kick, rest, snare, rest
+"[bd ~] sd"         // Half-time kick with snare
+"~ [hh hh]"         // Rest then two hi-hats
+```
+
+## Complex Patterns
+**✅ ALWAYS build complex patterns incrementally**
+```javascript
+// Start simple
+"bd sd"
+
+// Add hi-hats
+"[bd,hh*4] sd"
+
+// Add variation
+"[bd,hh*4] <sd cp>"
+
+// Add dynamics
+"[bd@3,hh*4] <sd cp!>"
+```
+
+## Parser Grammar Rules
+**✅ ALWAYS regenerate parser after grammar changes**
+```bash
+# After modifying krill.pegjs
+cd packages/mini
+pnpm run build:parser
+```
+
+**✅ ALWAYS test new operators thoroughly**
+```javascript
+// Add to mini.test.mjs
+it('new operator', () => {
+  expect(mini('a|>0.25').firstCycle())
+    .toEqual(/* expected output */);
+});
+```
+
+## String Handling
+**✅ ALWAYS quote strings with spaces**
+```javascript
+'"hello world" "foo bar"'  // Two string values
+"'with quotes' normal"     // Mixed quoting
+```
+
+**❌ NEVER use unquoted strings with spaces**
+```javascript
+"hello world"  // ❌ Parsed as two elements
+```
+
+## Performance Tips
+**✅ ALWAYS reuse parsed patterns**
+```javascript
+// Good - Parse once
+const rhythm = mini("bd [sd sd] bd sd");
+rhythm.fast(2);
+
+// Bad - Reparse each time
+mini("bd [sd sd] bd sd").fast(2);
+```
+
+## Error Messages
+**✅ ALWAYS provide clear parser errors**
+```javascript
+// Parser should give helpful errors
+mini("[a b")    // Error: Expected ']'
+mini("a(")      // Error: Expected number
+mini("a*")      // Error: Expected number after *
+```
+
+## Enforcement Rules
+- Strings passed to pattern functions auto-parse as mini
+- Brackets must be balanced
+- Operators require valid operands
+- Euclidean parameters must be positive integers
+- Sample indices use colon notation
+- Spaces separate sequence elements

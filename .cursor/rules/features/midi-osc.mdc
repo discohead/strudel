@@ -1,0 +1,283 @@
+# MIDI & OSC Integration - Feature Rules
+
+## MIDI Output
+**✅ ALWAYS use WebMIDI API properly**
+```javascript
+// Request MIDI access
+const midi = await navigator.requestMIDIAccess();
+
+// Get outputs
+const outputs = Array.from(midi.outputs.values());
+const output = outputs[0]; // Or let user select
+
+// Send MIDI messages
+const sendNote = (note, velocity, channel = 0) => {
+  // Note on
+  output.send([0x90 | channel, note, velocity]);
+  
+  // Schedule note off
+  setTimeout(() => {
+    output.send([0x80 | channel, note, 0]);
+  }, duration * 1000);
+};
+```
+
+**✅ ALWAYS handle MIDI timing accurately**
+```javascript
+// Use MIDI timestamps for timing
+const scheduler = getScheduler();
+
+scheduler.setPattern(pattern, (hap, audioTime) => {
+  const midiTime = audioTime * 1000; // Convert to ms
+  const { note = 60, velocity = 100, channel = 0 } = hap.value;
+  
+  // Note on with timestamp
+  output.send([0x90 | channel, note, velocity], midiTime);
+  
+  // Note off with timestamp
+  const offTime = midiTime + (hap.duration * 1000);
+  output.send([0x80 | channel, note, 0], offTime);
+});
+```
+
+## MIDI Input
+**✅ ALWAYS support MIDI learn functionality**
+```javascript
+const midiInputs = new Map();
+
+// Listen to all MIDI inputs
+midi.inputs.forEach(input => {
+  input.onmidimessage = (event) => {
+    const [status, data1, data2] = event.data;
+    const channel = status & 0x0F;
+    const command = status & 0xF0;
+    
+    if (command === 0x90 && data2 > 0) {
+      // Note on
+      handleNoteOn(data1, data2, channel);
+    } else if (command === 0xB0) {
+      // Control change
+      handleCC(data1, data2, channel);
+    }
+  };
+});
+
+// MIDI learn mode
+let midiLearnTarget = null;
+
+const startMidiLearn = (param) => {
+  midiLearnTarget = param;
+};
+
+const handleCC = (cc, value, channel) => {
+  if (midiLearnTarget) {
+    // Map CC to parameter
+    midiInputs.set(`cc${cc}_ch${channel}`, midiLearnTarget);
+    midiLearnTarget = null;
+  }
+  
+  // Update mapped parameter
+  const param = midiInputs.get(`cc${cc}_ch${channel}`);
+  if (param) {
+    param.value = value / 127;
+  }
+};
+```
+
+## OSC Communication
+**✅ ALWAYS use proper OSC formatting**
+```javascript
+// OSC message structure
+const createOSCMessage = (address, ...args) => {
+  return {
+    address,      // e.g., "/note/on"
+    args: args.map(arg => {
+      if (typeof arg === 'number') {
+        return { type: 'f', value: arg };
+      } else if (typeof arg === 'string') {
+        return { type: 's', value: arg };
+      }
+      // Add more types as needed
+    })
+  };
+};
+
+// Send OSC
+const sendOSC = (address, ...args) => {
+  const message = createOSCMessage(address, ...args);
+  oscPort.send(message);
+};
+```
+
+**✅ ALWAYS implement OSC pattern output**
+```javascript
+export const osc = (options = {}) => {
+  const {
+    port = 57120,
+    host = 'localhost',
+    latency = 0.1
+  } = options;
+  
+  const oscPort = new OSCPort(port, host);
+  
+  return (pat) => {
+    const scheduler = getScheduler();
+    
+    scheduler.setPattern(pat, (hap, audioTime) => {
+      const oscTime = audioTime + latency;
+      
+      // Send different message types
+      if (hap.value.s) {
+        // SuperCollider style
+        sendOSC('/s_new', hap.value.s, -1, 0, 0,
+          ...Object.entries(hap.value).flat()
+        );
+      } else if (hap.value.address) {
+        // Custom OSC address
+        sendOSC(hap.value.address, ...hap.value.args);
+      } else {
+        // Default format
+        sendOSC('/trigger/hap', 
+          hap.value,
+          hap.whole.begin.valueOf(),
+          hap.duration
+        );
+      }
+    });
+  };
+};
+```
+
+## Clock Sync
+**✅ ALWAYS support MIDI clock sync**
+```javascript
+let midiClockCount = 0;
+let lastClockTime = 0;
+let clockInterval = 0;
+
+const handleMidiClock = (event) => {
+  const [status] = event.data;
+  
+  switch (status) {
+    case 0xF8: // Clock tick (24 ppq)
+      midiClockCount++;
+      if (midiClockCount % 24 === 0) {
+        // One beat
+        const now = performance.now();
+        if (lastClockTime > 0) {
+          clockInterval = now - lastClockTime;
+          const bpm = 60000 / clockInterval;
+          updateTempo(bpm);
+        }
+        lastClockTime = now;
+      }
+      break;
+      
+    case 0xFA: // Start
+      startPlayback();
+      midiClockCount = 0;
+      break;
+      
+    case 0xFC: // Stop
+      stopPlayback();
+      break;
+  }
+};
+```
+
+## Parameter Mapping
+**✅ ALWAYS normalize parameter ranges**
+```javascript
+// MIDI CC (0-127) to parameter (0-1)
+const ccToParam = (cc) => cc / 127;
+
+// Parameter to MIDI CC
+const paramToCC = (param) => Math.round(param * 127);
+
+// Note number to frequency
+const noteToFreq = (note) => 440 * Math.pow(2, (note - 69) / 12);
+
+// Frequency to note number
+const freqToNote = (freq) => 69 + 12 * Math.log2(freq / 440);
+```
+
+## Channel Management
+**✅ ALWAYS support multi-channel operation**
+```javascript
+Pattern.prototype.midichan = function(channel) {
+  return this.withValue(v => ({
+    ...v,
+    channel: channel % 16 // MIDI channels 0-15
+  }));
+};
+
+// Usage
+stack(
+  "c3 e3 g3".midichan(0),      // Channel 1
+  "c2 c2 g2 g2".midichan(1)    // Channel 2
+).midi();
+```
+
+## Program Changes
+**✅ ALWAYS support instrument selection**
+```javascript
+Pattern.prototype.program = function(prog) {
+  return this.withHaps(haps => {
+    // Send program change before notes
+    const programChanges = new Set();
+    
+    haps.forEach(hap => {
+      const channel = hap.value.channel || 0;
+      const key = `${channel}:${prog}`;
+      
+      if (!programChanges.has(key)) {
+        output.send([0xC0 | channel, prog]);
+        programChanges.add(key);
+      }
+    });
+    
+    return haps;
+  });
+};
+```
+
+## CC Patterns
+**✅ ALWAYS allow patterning of CC messages**
+```javascript
+// Pattern CC values
+"0 64 127 64".cc(1).midichan(0) // Mod wheel pattern
+
+// Multiple CCs
+stack(
+  sine.range(0, 127).cc(1),      // Mod wheel
+  saw.range(0, 127).cc(74)       // Filter cutoff
+).midichan(0).midi()
+```
+
+## Error Handling
+**✅ ALWAYS handle MIDI/OSC errors gracefully**
+```javascript
+try {
+  const midi = await navigator.requestMIDIAccess();
+} catch (error) {
+  console.warn('MIDI not available:', error);
+  // Provide fallback or disable MIDI features
+}
+
+// Handle disconnections
+output.onstatechange = (event) => {
+  if (event.port.state === 'disconnected') {
+    console.warn('MIDI device disconnected');
+    // Re-scan for devices or notify user
+  }
+};
+```
+
+## Enforcement Rules
+- MIDI timing must use timestamps, not setTimeout
+- MIDI channels are 0-15 internally (show as 1-16 to users)
+- OSC messages must follow proper type tagging
+- Parameter ranges must be normalized
+- Support both input and output for MIDI/OSC
+- Handle device disconnection gracefully
+- Clock sync must track tempo accurately

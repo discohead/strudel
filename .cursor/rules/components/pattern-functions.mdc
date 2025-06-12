@@ -1,0 +1,205 @@
+# Pattern Functions - Component Rules
+
+## Pattern Creation Rules
+**✅ ALWAYS use factory functions, not constructors**
+```javascript
+// Good - Factory functions
+const pat = sequence('a', 'b', 'c');
+const pat2 = stack(pat, rev(pat));
+const pat3 = pure(42);
+
+// Internal only - Pattern constructor
+const customPat = new Pattern(queryFunc); // Only in core internals
+```
+
+**❌ NEVER expose Pattern constructor to users**
+```javascript
+// Bad - Direct instantiation in user code
+const pat = new Pattern((state) => []); // ❌
+```
+
+## Pattern Method Implementation
+**✅ ALWAYS return new Pattern instances**
+```javascript
+Pattern.prototype.fast = function(factor) {
+  // Create new Pattern, don't modify this
+  return new Pattern((state) => {
+    const scaled = state.setSpan(
+      state.span.withTime(t => t.mul(Fraction(factor)))
+    );
+    return this.query(scaled);
+  }, this.tactus * factor);
+};
+```
+
+**✅ ALWAYS preserve pattern metadata**
+```javascript
+Pattern.prototype.myTransform = function() {
+  const pat = new Pattern(transformedQuery);
+  // Preserve steps if relevant
+  pat._steps = this._steps;
+  return pat;
+};
+```
+
+## Pattern Registration
+**✅ ALWAYS use register() for global functions**
+```javascript
+// Good - Registered function
+export const rev = register('rev', 
+  function(pat) {
+    return reify(pat).rev();
+  }
+);
+
+// Automatically available as:
+// - rev("a b c")
+// - "a b c".rev()
+```
+
+**✅ ALWAYS add both function and method forms**
+```javascript
+// Function form
+export const fast = register('fast', curry((factor, pat) => 
+  reify(pat).fast(factor)
+));
+
+// Method form  
+Pattern.prototype.fast = function(factor) {
+  return fast(factor, this);
+};
+```
+
+## Pattern Chaining
+**✅ ALWAYS enable method chaining**
+```javascript
+// Good - All methods return patterns
+"c3 eb3 g3"
+  .fast(2)
+  .add(12)
+  .rev()
+  .s('piano')
+  .gain(0.8);
+```
+
+## Pattern Steps Tracking
+**✅ ALWAYS track steps for proper alignment**
+```javascript
+// Sequence tracks steps
+export const sequence = (...args) => {
+  const pat = new Pattern(query);
+  pat._steps = args.length; // Track sequence length
+  return pat;
+};
+
+// Stack preserves LCM of steps
+export const stack = (...patterns) => {
+  const pat = new Pattern(query);
+  pat._steps = lcmPattern(patterns); // LCM for alignment
+  return pat;
+};
+```
+
+## WithValue Pattern
+**✅ ALWAYS use withValue for value transformations**
+```javascript
+// Good - Transform values
+pattern.withValue(x => x * 2);
+pattern.fmap(func); // Alias
+
+// Implementation
+Pattern.prototype.withValue = function(func) {
+  return new Pattern((state) => 
+    this.query(state).map(hap => hap.withValue(func))
+  );
+};
+```
+
+**❌ NEVER mutate hap values directly**
+```javascript
+// Bad - Direct mutation
+pattern.query(state).map(hap => {
+  hap.value = transform(hap.value); // ❌ Mutates
+  return hap;
+});
+```
+
+## Pattern Input Handling
+**✅ ALWAYS use reify() on pattern inputs**
+```javascript
+export const fast = register('fast', curry((factor, pat) => {
+  // reify converts strings/values to patterns
+  pat = reify(pat);
+  return pat.fast(factor);
+}));
+```
+
+**✅ ALWAYS use curry() for multi-arg functions**
+```javascript
+// Enables partial application
+export const euclidRot = register('euclidRot', 
+  curry((pulses, steps, rotation, pat) => {
+    pat = reify(pat);
+    return pat.struct(euclidRot(pulses, steps, rotation));
+  })
+);
+```
+
+## Pattern Query Implementation
+**✅ ALWAYS handle time correctly in queries**
+```javascript
+Pattern.prototype.slow = function(factor) {
+  return new Pattern((state) => {
+    // Scale time appropriately
+    const scaled = state.setSpan(
+      state.span.withTime(t => t.div(Fraction(factor)))
+    );
+    return this.query(scaled).map(hap => 
+      hap.withTime(t => t.mul(Fraction(factor)))
+    );
+  });
+};
+```
+
+## Pattern Combinators
+**✅ ALWAYS implement correct time logic**
+```javascript
+// Stack - all patterns play simultaneously
+export const stack = (...patterns) => {
+  return new Pattern((state) => 
+    patterns.flatMap(pat => reify(pat).query(state))
+  );
+};
+
+// Cat - patterns play sequentially
+export const cat = (...patterns) => {
+  return new Pattern((state) => {
+    const cycle = state.span.begin.cyclePos();
+    const index = cycle % patterns.length;
+    return patterns[index].query(state);
+  });
+};
+```
+
+## Control Application
+**✅ ALWAYS merge controls properly**
+```javascript
+// Controls create patterns of objects
+Pattern.prototype.set = function(controls) {
+  return this.withValue(value => ({
+    ...value,
+    ...controls
+  }));
+};
+
+// Usage
+pattern.set({ s: 'piano', gain: 0.8 });
+```
+
+## Enforcement Rules
+- Pattern methods must return Pattern type
+- Pattern functions must call reify() on inputs
+- Multi-arg functions must use curry()
+- Pattern constructors must track _steps when relevant
+- Time transformations must use Fraction arithmetic
+- Methods must enable chaining by returning patterns

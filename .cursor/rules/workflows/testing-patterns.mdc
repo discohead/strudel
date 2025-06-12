@@ -1,0 +1,288 @@
+# Testing Patterns - Workflow Rules
+
+## Test Setup
+**✅ ALWAYS structure tests consistently**
+```javascript
+import { describe, it, expect } from 'vitest';
+import { sequence, stack, pure } from '@strudel/core';
+import { mini } from '@strudel/mini';
+
+// Import what you're testing
+import { myFunction } from '../mymodule.mjs';
+
+// Import test helpers
+const { sameFirst, hap, ts } = await import('../../core/test/runtime.mjs');
+```
+
+## Basic Pattern Testing
+**✅ ALWAYS test first cycle output**
+```javascript
+describe('myPattern', () => {
+  it('produces expected output', () => {
+    const pattern = myPattern('a', 'b', 'c');
+    const events = pattern.firstCycle();
+    
+    // For simple cases, test specific properties
+    expect(events.length).toBe(3);
+    expect(events[0].value).toBe('a');
+    expect(events[0].whole.begin.valueOf()).toBe(0);
+    
+    // For complex cases, use snapshots
+    expect(events).toMatchSnapshot();
+  });
+});
+```
+
+## Snapshot Testing Strategy
+**✅ ALWAYS use snapshots for complex patterns**
+```javascript
+it('complex pattern interaction', () => {
+  const pattern = stack(
+    sequence('c3', 'e3', 'g3').fast(2),
+    sequence('c2', 'g2').slow(2)
+  ).euclidRot(5, 8, 1);
+  
+  // Snapshot captures exact structure
+  expect(pattern.firstCycle()).toMatchSnapshot();
+});
+```
+
+**✅ ALWAYS update snapshots deliberately**
+```bash
+# Review changes carefully before updating
+pnpm test-ui  # Interactive mode to review
+
+# Update after verifying correctness
+pnpm snapshot
+```
+
+## Testing Time Ranges
+**✅ ALWAYS test beyond first cycle**
+```javascript
+it('maintains pattern across cycles', () => {
+  const pattern = sequence('a', 'b', 'c');
+  
+  // Test multiple cycles
+  expect(pattern.queryArc(0, 1)).toMatchSnapshot();
+  expect(pattern.queryArc(1, 2)).toMatchSnapshot();
+  expect(pattern.queryArc(0.5, 1.5)).toMatchSnapshot();
+});
+```
+
+## Edge Case Testing
+**✅ ALWAYS test edge cases**
+```javascript
+describe('edge cases', () => {
+  it('handles empty pattern', () => {
+    const pattern = myFunction();
+    expect(pattern.firstCycle()).toEqual([]);
+  });
+  
+  it('handles single value', () => {
+    const pattern = myFunction('a');
+    expect(pattern.firstCycle()).toMatchSnapshot();
+  });
+  
+  it('handles fractional values', () => {
+    const pattern = myFunction(1/3, 2/3);
+    expect(pattern.firstCycle()).toMatchSnapshot();
+  });
+  
+  it('handles negative values', () => {
+    const pattern = myFunction(-1);
+    expect(pattern.firstCycle()).toMatchSnapshot();
+  });
+});
+```
+
+## Mini Notation Testing
+**✅ ALWAYS test mini notation integration**
+```javascript
+it('works with mini notation', () => {
+  // Function form
+  const p1 = myFunction(0.5, "a b c");
+  expect(p1.firstCycle()).toMatchSnapshot();
+  
+  // Method form
+  const p2 = "a b c".myFunction(0.5);
+  expect(p2.firstCycle()).toMatchSnapshot();
+  
+  // Should be equivalent
+  sameFirst(p1, p2);
+});
+```
+
+## Error Condition Testing
+**✅ ALWAYS test error handling**
+```javascript
+it('throws on invalid input', () => {
+  // Test type errors
+  expect(() => myFunction('invalid')).toThrow(/expected number/);
+  
+  // Test range errors
+  expect(() => myFunction(-1)).toThrow(/must be positive/);
+  
+  // Test mini notation errors
+  expect(() => mini('a b [')).toThrow(/Expected ']'/);
+});
+```
+
+## Pattern Comparison Testing
+**✅ ALWAYS use proper comparison helpers**
+```javascript
+// Use sameFirst for pattern equivalence
+it('transformations are equivalent', () => {
+  const p1 = sequence('a', 'b').fast(2).slow(2);
+  const p2 = sequence('a', 'b');
+  
+  sameFirst(p1, p2);
+});
+
+// Manual comparison when needed
+it('produces specific structure', () => {
+  const events = pattern.firstCycle();
+  
+  // Sort for consistent comparison
+  const sorted = events.sort((a, b) => 
+    a.part.begin.compare(b.part.begin)
+  );
+  
+  expect(sorted.map(e => e.value)).toEqual(['a', 'b', 'c']);
+});
+```
+
+## Performance Testing
+**✅ ALWAYS test performance-critical code**
+```javascript
+// bench/myfunction.bench.mjs
+import { bench, describe } from 'vitest';
+
+describe('myFunction performance', () => {
+  bench('simple case', () => {
+    const p = sequence('a', 'b', 'c');
+    myFunction(0.5, p).queryArc(0, 1);
+  });
+  
+  bench('complex case', () => {
+    const p = stack(...Array(10).fill(sequence('a', 'b', 'c')));
+    myFunction(0.5, p).queryArc(0, 100);
+  });
+  
+  bench('with mini notation', () => {
+    "a b c d e f g".myFunction(0.5).queryArc(0, 10);
+  });
+});
+```
+
+## Integration Testing
+**✅ ALWAYS test with other patterns**
+```javascript
+describe('integration', () => {
+  it('works with stack', () => {
+    const pattern = stack(
+      myFunction(0.5, "c3"),
+      myFunction(0.25, "e3 g3")
+    );
+    expect(pattern.firstCycle()).toMatchSnapshot();
+  });
+  
+  it('works with controls', () => {
+    const pattern = myFunction(0.5, "c3 e3")
+      .s('piano')
+      .gain(sequence(0.5, 1));
+    expect(pattern.firstCycle()).toMatchSnapshot();
+  });
+  
+  it('chains with other transforms', () => {
+    const pattern = "a b c d"
+      .myFunction(0.25)
+      .fast(2)
+      .rev();
+    expect(pattern.firstCycle()).toMatchSnapshot();
+  });
+});
+```
+
+## Test Data Helpers
+**✅ ALWAYS use consistent test data**
+```javascript
+// Common test patterns
+const testPatterns = {
+  simple: sequence('a', 'b', 'c'),
+  notes: sequence('c3', 'e3', 'g3'),
+  rhythm: sequence('bd', 'sd', 'bd', 'sd'),
+  complex: stack(
+    sequence('a', 'b').fast(3),
+    sequence('c', 'd', 'e').slow(2)
+  )
+};
+
+// Reuse in tests
+it('handles various patterns', () => {
+  Object.entries(testPatterns).forEach(([name, pat]) => {
+    const result = myFunction(0.5, pat);
+    expect(result.firstCycle()).toMatchSnapshot(name);
+  });
+});
+```
+
+## Debugging Failed Tests
+**✅ ALWAYS provide debugging helpers**
+```javascript
+it('debug pattern output', () => {
+  const pattern = myFunction(0.5, "a b c");
+  
+  // Use .log() to see output during test
+  pattern.log();
+  
+  // Or manually inspect
+  const events = pattern.firstCycle();
+  console.log('Event count:', events.length);
+  console.log('Values:', events.map(e => e.value));
+  console.log('Times:', events.map(e => ({
+    begin: e.whole.begin.valueOf(),
+    end: e.whole.end.valueOf()
+  })));
+  
+  expect(events).toMatchSnapshot();
+});
+```
+
+## Test Organization
+**✅ ALWAYS organize tests logically**
+```javascript
+describe('myFunction', () => {
+  describe('basic functionality', () => {
+    it('works with simple values', () => {});
+    it('works with patterns', () => {});
+  });
+  
+  describe('parameter validation', () => {
+    it('validates numeric parameters', () => {});
+    it('handles edge values', () => {});
+  });
+  
+  describe('mini notation', () => {
+    it('works as function', () => {});
+    it('works as method', () => {});
+  });
+  
+  describe('integration', () => {
+    it('combines with other patterns', () => {});
+    it('preserves metadata', () => {});
+  });
+  
+  describe('performance', () => {
+    it('handles large patterns', () => {});
+  });
+});
+```
+
+## Enforcement Rules
+- Tests must use snapshots for complex outputs
+- Must test first cycle at minimum
+- Must test edge cases (empty, single, negative)
+- Must test mini notation integration
+- Must test error conditions
+- Must use vitest helpers and matchers
+- Performance tests go in bench/ directory

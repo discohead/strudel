@@ -1,0 +1,228 @@
+# Transpiler - Feature Rules
+
+## String Auto-Parsing
+**✅ ALWAYS transpile strings to mini notation**
+```javascript
+// User writes
+"c3 e3 g3".fast(2)
+
+// Transpiler converts to
+mini("c3 e3 g3").fast(2)
+```
+
+**✅ ALWAYS detect pattern method chains on strings**
+```javascript
+// Detect these patterns
+"pattern".methodName()
+"pattern"['methodName']()
+"pattern"?.methodName?.()
+```
+
+## Widget Injection
+**✅ ALWAYS inject unique IDs for widgets**
+```javascript
+// User writes
+note(slider(60, 0, 127))
+
+// Transpiler converts to
+note(sliderWithID('slider_123', 60, 0, 127))
+```
+
+**✅ ALWAYS track widget positions**
+```javascript
+// Widget metadata
+{
+  type: 'slider',
+  from: node.start,
+  to: node.end,
+  id: 'slider_123',
+  params: [60, 0, 127]
+}
+```
+
+## Function Registration
+**✅ ALWAYS make pattern functions globally available**
+```javascript
+// After registration
+register('fast', (speed, pat) => pat.fast(speed));
+
+// Available as:
+fast(2, "c3 e3")         // Function form
+"c3 e3".fast(2)          // Method form
+$("c3 e3").fast(2)       // Pattern wrapper
+```
+
+## Variable Hoisting
+**✅ ALWAYS hoist variable declarations**
+```javascript
+// User writes (anywhere in code)
+myvar = sequence("a", "b", "c")
+
+// Transpiler adds at top
+let myvar;
+
+// Assignment stays in place
+myvar = sequence("a", "b", "c")
+```
+
+**❌ NEVER hoist if already declared**
+```javascript
+// Don't hoist these
+let myvar = 5;      // Already declared
+const myvar = 5;    // Already declared
+var myvar = 5;      // Already declared
+```
+
+## Double Dot Prevention
+**✅ ALWAYS add semicolons before dots on newlines**
+```javascript
+// User writes
+stack(
+  "a b c"
+    .fast(2),
+  "d e f"
+)
+
+// Transpiler prevents double dot
+stack(
+  ;"a b c"
+    .fast(2),
+  "d e f"
+)
+```
+
+## AST Transformation Rules
+**✅ ALWAYS preserve source positions**
+```javascript
+// When transforming nodes
+const newNode = {
+  ...oldNode,
+  type: 'CallExpression',
+  start: oldNode.start,  // Preserve
+  end: oldNode.end,      // Preserve
+  // ... new properties
+};
+```
+
+**✅ ALWAYS use proper visitor pattern**
+```javascript
+walk(ast, {
+  enter(node, parent) {
+    // Process node on entry
+    if (node.type === 'Literal' && 
+        typeof node.value === 'string') {
+      // Transform string literal
+    }
+  },
+  leave(node, parent) {
+    // Process node on exit if needed
+  }
+});
+```
+
+## Import Handling
+**✅ ALWAYS preserve user imports**
+```javascript
+// User imports
+import { something } from 'mylib';
+
+// Transpiler adds Strudel imports after
+import { Pattern, mini } from '@strudel/core';
+```
+
+**❌ NEVER modify user import statements**
+
+## Error Recovery
+**✅ ALWAYS provide helpful error messages**
+```javascript
+try {
+  const ast = parse(code);
+  return transform(ast);
+} catch (error) {
+  // Add context
+  throw new Error(
+    `Transpilation failed at line ${error.line}: ${error.message}`
+  );
+}
+```
+
+**✅ ALWAYS fall back gracefully**
+```javascript
+// If transpilation fails partially
+try {
+  return transpileWithWidgets(code);
+} catch {
+  // Fall back to basic transpilation
+  return transpileBasic(code);
+}
+```
+
+## Pattern Method Detection
+**✅ ALWAYS check for pattern methods dynamically**
+```javascript
+// Check if identifier is a pattern method
+const isPatternMethod = (name) => {
+  return name in Pattern.prototype || 
+         registeredFunctions.has(name);
+};
+```
+
+## Comment Preservation
+**✅ ALWAYS preserve user comments**
+```javascript
+// Parse with comments
+const ast = parse(code, {
+  sourceType: 'module',
+  allowReturnOutsideFunction: true,
+  ranges: true,
+  attachComment: true
+});
+```
+
+## Top-Level Return
+**✅ ALWAYS allow top-level return**
+```javascript
+// User can write
+return stack("bd", "sd").fast(2)
+
+// Without function wrapper
+```
+
+## Widget Types
+**✅ ALWAYS support standard widget types**
+```javascript
+const WIDGET_TYPES = [
+  'slider',      // Numeric slider
+  'knob',        // Rotary control
+  'xy',          // 2D controller
+  'toggle',      // Boolean switch
+  'select',      // Dropdown menu
+  'number',      // Number input
+  'text'         // Text input
+];
+```
+
+## Performance Optimization
+**✅ ALWAYS cache transpilation results**
+```javascript
+const cache = new Map();
+
+export const transpile = (code) => {
+  const hash = hashCode(code);
+  if (cache.has(hash)) {
+    return cache.get(hash);
+  }
+  
+  const result = doTranspile(code);
+  cache.set(hash, result);
+  return result;
+};
+```
+
+## Enforcement Rules
+- String literals followed by pattern methods must be wrapped
+- Widget calls must have unique IDs injected
+- Undeclared variables must be hoisted
+- Source positions must be preserved
+- Comments must not be stripped
+- Top-level returns must be allowed

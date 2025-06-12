@@ -1,0 +1,274 @@
+# Visualization - Feature Rules
+
+## Drawing Components
+**✅ ALWAYS use Canvas API for performance**
+```javascript
+// Good - Canvas for real-time viz
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+
+// Efficient drawing
+ctx.clearRect(0, 0, width, height);
+haps.forEach(hap => drawHap(ctx, hap));
+```
+
+**❌ NEVER use DOM elements for real-time visualization**
+```javascript
+// Bad - DOM manipulation is slow
+haps.forEach(hap => {
+  const div = document.createElement('div'); // ❌
+  container.appendChild(div);
+});
+```
+
+## Pianoroll Implementation
+**✅ ALWAYS implement standard pianoroll features**
+```javascript
+export const pianoroll = (options = {}) => {
+  const {
+    fold = 0,          // Octave folding
+    vertical = false,  // Orientation
+    playhead = true,   // Show playhead
+    noteLabels = true, // Show note names
+    zoom = 1          // Zoom level
+  } = options;
+  
+  return (pat) => {
+    const draw = (haps, time) => {
+      // Clear canvas
+      ctx.clearRect(0, 0, width, height);
+      
+      // Draw grid
+      drawGrid(ctx, fold);
+      
+      // Draw notes
+      haps.forEach(hap => {
+        const y = noteToY(hap.value.note, fold);
+        const x = timeToX(hap.whole.begin);
+        const w = durationToWidth(hap.duration);
+        
+        ctx.fillStyle = hap.value.color || 'white';
+        ctx.fillRect(x, y, w, noteHeight);
+      });
+      
+      // Draw playhead
+      if (playhead) {
+        const x = timeToX(time);
+        ctx.strokeStyle = 'red';
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+    };
+    
+    return createVisualizer(pat, draw);
+  };
+};
+```
+
+## Scope/Oscilloscope
+**✅ ALWAYS use Web Audio AnalyserNode**
+```javascript
+export const scope = (options = {}) => {
+  const analyser = audioContext.createAnalyser();
+  analyser.fftSize = options.fftSize || 2048;
+  
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+  
+  const draw = () => {
+    analyser.getByteTimeDomainData(dataArray);
+    
+    ctx.clearRect(0, 0, width, height);
+    ctx.beginPath();
+    
+    for (let i = 0; i < bufferLength; i++) {
+      const v = dataArray[i] / 128.0;
+      const y = v * height / 2;
+      
+      if (i === 0) {
+        ctx.moveTo(0, y);
+      } else {
+        ctx.lineTo((i / bufferLength) * width, y);
+      }
+    }
+    
+    ctx.stroke();
+    requestAnimationFrame(draw);
+  };
+  
+  return { analyser, draw };
+};
+```
+
+## Color Mapping
+**✅ ALWAYS provide consistent color schemes**
+```javascript
+// Standard color mapping
+const noteColors = {
+  'C': '#FF0000',
+  'C#': '#FF7F00',
+  'D': '#FFFF00',
+  'D#': '#7FFF00',
+  'E': '#00FF00',
+  'F': '#00FF7F',
+  'F#': '#00FFFF',
+  'G': '#007FFF',
+  'G#': '#0000FF',
+  'A': '#7F00FF',
+  'A#': '#FF00FF',
+  'B': '#FF007F'
+};
+
+// Velocity to opacity
+const velocityToOpacity = (velocity) => {
+  return 0.3 + (velocity * 0.7);
+};
+```
+
+## Animation Loops
+**✅ ALWAYS use requestAnimationFrame**
+```javascript
+// Good - Smooth animation
+let animationId;
+
+const animate = (time) => {
+  draw(haps, time);
+  animationId = requestAnimationFrame(animate);
+};
+
+// Start/stop
+const start = () => animate();
+const stop = () => cancelAnimationFrame(animationId);
+```
+
+**❌ NEVER use setInterval for animation**
+```javascript
+// Bad - Janky animation
+setInterval(() => draw(), 16); // ❌
+```
+
+## Coordinate Systems
+**✅ ALWAYS handle coordinate transformation properly**
+```javascript
+// Time to pixel conversion
+const timeToX = (time, zoom = 1) => {
+  const cycleWidth = width * zoom;
+  const cyclePos = time.valueOf() % 1;
+  return cyclePos * cycleWidth;
+};
+
+// Note to pixel conversion  
+const noteToY = (note, fold = 0) => {
+  const noteRange = fold > 0 ? 12 : 128;
+  const notePos = fold > 0 ? note % 12 : note;
+  return height - (notePos / noteRange) * height;
+};
+```
+
+## Performance Optimization
+**✅ ALWAYS batch draw operations**
+```javascript
+// Good - Batch similar operations
+ctx.fillStyle = 'white';
+haps.filter(h => h.value.color === 'white')
+    .forEach(h => ctx.fillRect(...));
+
+ctx.fillStyle = 'red';
+haps.filter(h => h.value.color === 'red')
+    .forEach(h => ctx.fillRect(...));
+```
+
+**✅ ALWAYS use object pools for frequent allocations**
+```javascript
+// Object pool for particles
+const particlePool = [];
+
+const getParticle = () => {
+  return particlePool.pop() || new Particle();
+};
+
+const releaseParticle = (particle) => {
+  particle.reset();
+  particlePool.push(particle);
+};
+```
+
+## React Integration
+**✅ ALWAYS clean up on unmount**
+```javascript
+export function Visualizer({ pattern }) {
+  const canvasRef = useRef();
+  const animationRef = useRef();
+  
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    
+    const draw = () => {
+      // Drawing logic
+      animationRef.current = requestAnimationFrame(draw);
+    };
+    
+    draw();
+    
+    // Cleanup
+    return () => {
+      cancelAnimationFrame(animationRef.current);
+    };
+  }, [pattern]);
+  
+  return <canvas ref={canvasRef} />;
+}
+```
+
+## Responsive Design
+**✅ ALWAYS handle canvas resize**
+```javascript
+const handleResize = () => {
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+  
+  // Recalculate scaling factors
+  updateScaling();
+};
+
+window.addEventListener('resize', handleResize);
+```
+
+## Accessibility
+**✅ ALWAYS provide text alternatives**
+```javascript
+// Add ARIA labels
+canvas.setAttribute('role', 'img');
+canvas.setAttribute('aria-label', 
+  `Music visualization showing ${haps.length} notes`
+);
+
+// Provide data export
+const exportData = () => {
+  return haps.map(h => ({
+    time: h.whole.begin.valueOf(),
+    note: h.value.note,
+    velocity: h.value.velocity
+  }));
+};
+```
+
+## Standard Visualizations
+**✅ ALWAYS implement these core visualizations**
+1. **Pianoroll** - Note display over time
+2. **Scope** - Waveform display
+3. **Spectrum** - Frequency analysis
+4. **Meter** - Level monitoring
+5. **XY** - 2D parameter space
+
+## Enforcement Rules
+- Canvas for real-time graphics, not DOM
+- requestAnimationFrame for animation loops
+- AnalyserNode for audio visualization
+- Proper coordinate transformation
+- Cleanup on component unmount
+- Responsive canvas sizing
+- Batch draw operations for performance

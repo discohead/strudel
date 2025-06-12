@@ -1,0 +1,196 @@
+# Architecture Principles - Strudel FRP System
+
+## Functional Reactive Programming (FRP)
+**✅ ALWAYS treat Patterns as immutable functions of time**
+```javascript
+// Good - Pattern as time function
+const pattern = new Pattern((state) => {
+  // Query returns events for the given time span
+  return calculateEvents(state.span);
+});
+```
+
+**❌ NEVER mutate Pattern instances**
+```javascript
+// Bad - Mutating pattern
+pattern.value = newValue; // ❌
+pattern._steps = 4; // ❌ Use withSteps()
+```
+
+## Pattern Immutability
+**✅ ALWAYS return new Pattern instances from transformations**
+```javascript
+// Good - Immutable transformation
+Pattern.prototype.fast = function(factor) {
+  return new Pattern((state) => {
+    const scaled = state.setSpan(state.span.withTime(t => t.mul(factor)));
+    return this.query(scaled);
+  });
+};
+```
+
+**❌ NEVER modify patterns in place**
+```javascript
+// Bad - In-place modification
+Pattern.prototype.fast = function(factor) {
+  this.query = modifiedQuery; // ❌ Mutates original
+  return this;
+};
+```
+
+## Lazy Evaluation
+**✅ ALWAYS defer computation until query time**
+```javascript
+// Good - Lazy pattern composition
+const complex = stack(
+  expensive_pattern_1,
+  expensive_pattern_2
+); // No computation yet
+
+// Computation only happens here
+const events = complex.queryArc(0, 1);
+```
+
+**❌ NEVER eagerly compute pattern results**
+```javascript
+// Bad - Eager computation
+const pattern = {
+  events: computeAllEvents(), // ❌ Computed immediately
+  query: (state) => filterEvents(this.events, state)
+};
+```
+
+## Time Precision
+**✅ ALWAYS use Fraction for time values**
+```javascript
+// Good - Precise fractional time
+const time = Fraction(1, 3);
+const span = new TimeSpan(Fraction(0), Fraction(1));
+```
+
+**❌ NEVER use JavaScript numbers for precise time**
+```javascript
+// Bad - Loses precision
+const time = 1/3; // ❌ 0.3333333...
+const span = { begin: 0.5, end: 1.0 }; // ❌
+```
+
+## Pure Functions
+**✅ ALWAYS keep pattern queries pure**
+```javascript
+// Good - Pure query function
+pattern.query = (state) => {
+  // Same input always produces same output
+  return this.children.flatMap(child => child.query(state));
+};
+```
+
+**❌ NEVER use side effects in queries**
+```javascript
+// Bad - Side effects in query
+pattern.query = (state) => {
+  console.log('Querying...'); // ❌ Side effect
+  globalCounter++; // ❌ Mutation
+  return events;
+};
+```
+
+## Pattern Composition
+**✅ ALWAYS compose patterns functionally**
+```javascript
+// Good - Functional composition
+const addOctave = pat => pat.add(12);
+const doubleSpeed = pat => pat.fast(2);
+const transformed = flow(addOctave, doubleSpeed)(pattern);
+```
+
+**✅ ALWAYS preserve pattern metadata**
+```javascript
+// Good - Preserve steps through transformations
+Pattern.prototype.fast = function(factor) {
+  const pat = new Pattern(query);
+  pat._steps = this._steps; // Preserve metadata
+  return pat;
+};
+```
+
+## Event (Hap) Structure
+**✅ ALWAYS include whole and part TimeSpans**
+```javascript
+// Good - Complete Hap structure
+const hap = new Hap(
+  whole,    // Logical duration
+  part,     // Audible portion
+  value,    // Event value
+  context   // Metadata
+);
+```
+
+**✅ ALWAYS preserve context through transformations**
+```javascript
+// Good - Context preservation
+return this.query(state).map(hap => 
+  hap.withValue(v => transform(v)) // Preserves context
+);
+```
+
+## Module Boundaries
+**✅ ALWAYS keep core pattern-agnostic**
+```javascript
+// Good - Core knows nothing about audio/MIDI
+// pattern.mjs
+export const fast = (factor, pat) => pat.fast(factor);
+
+// webaudio/index.mjs
+import { fast } from '@strudel/core';
+// Audio-specific implementation
+```
+
+**❌ NEVER mix concerns across packages**
+```javascript
+// Bad - Audio logic in core
+// pattern.mjs
+pattern.playNote = (freq) => { // ❌ Audio concern in core
+  audioContext.createOscillator();
+};
+```
+
+## State Management
+**✅ ALWAYS thread state explicitly**
+```javascript
+// Good - Explicit state threading
+const query = (state) => {
+  const childState = state.setSpan(modifiedSpan);
+  return child.query(childState);
+};
+```
+
+**❌ NEVER use global mutable state**
+```javascript
+// Bad - Global state
+let currentTime = 0; // ❌
+const query = () => {
+  return eventsAt(currentTime); // ❌ Depends on global
+};
+```
+
+## Performance Patterns
+**✅ ALWAYS minimize allocations in hot paths**
+```javascript
+// Good - Reuse objects where possible
+const ZERO = Fraction(0);
+const ONE = Fraction(1);
+```
+
+**✅ ALWAYS query only needed time spans**
+```javascript
+// Good - Precise querying
+const events = pattern.queryArc(startTime, endTime);
+```
+
+## Enforcement Rules
+- Files matching `packages/core/**/*.mjs` must not import from audio/midi/osc packages
+- Pattern methods must return Pattern instances
+- Query functions must not have side effects
+- Time values must use Fraction type
+- Hap constructors must include whole and part spans

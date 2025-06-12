@@ -35,6 +35,29 @@ You will need to abide by the terms of the [GNU Affero Public Licence v3](LICENS
 
 Licensing info for the default sound banks can be found over on the [dough-samples](https://github.com/felixroos/dough-samples/blob/main/README.md) repository.
 
+## AI Assistant Configuration
+
+This project includes comprehensive AI assistant configuration for enhanced development experience:
+
+- **Claude Code**: Deep knowledge repository in `claude/` directory and `CLAUDE.md` files
+- **Cursor**: Behavioral rules in `.cursor/rules/` for active coding guidance  
+- **GitHub Copilot**: Optimized instructions in `.github/copilot-instructions.md`
+- **OpenAI Codex**: Cloud agent instructions in `AGENTS.md` for autonomous tasks
+
+To set up the complete AI ecosystem for your fork:
+```bash
+# After cloning, run the comprehensive setup (60-75 minutes)
+/user:ai-ecosystem-setup
+```
+
+For maintenance and updates:
+```bash
+# Quarterly maintenance (60-75 minutes)
+/user:ai-ecosystem-maintenance
+```
+
+See [AI Assistant Guide](.github/ai-assistant-guide.md) for detailed information.
+
 ## Contributing
 
 There are many ways to contribute to this project! See [contribution guide](./CONTRIBUTING.md).

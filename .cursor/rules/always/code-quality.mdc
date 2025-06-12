@@ -1,0 +1,179 @@
+# Code Quality Standards - Strudel
+
+## Testing Requirements
+**✅ ALWAYS write tests for new pattern functions**
+```javascript
+describe('myFunction', () => {
+  it('basic functionality', () => {
+    const result = myFunction('a b c');
+    expect(result.firstCycle()).toMatchSnapshot();
+  });
+  
+  it('edge cases', () => {
+    expect(myFunction().firstCycle()).toEqual([]);
+  });
+});
+```
+
+**✅ ALWAYS use snapshot tests for complex patterns**
+```javascript
+it('complex pattern output', () => {
+  const pattern = stack(
+    sequence('a', 'b').fast(3),
+    sequence('c', 'd', 'e').slow(2)
+  );
+  expect(pattern.firstCycle()).toMatchSnapshot();
+});
+```
+
+**✅ ALWAYS test error conditions**
+```javascript
+it('throws on invalid input', () => {
+  expect(() => mini('a b [')).toThrow(/Expected/);
+});
+```
+
+## Documentation Standards
+**✅ ALWAYS document public APIs with JSDoc**
+```javascript
+/**
+ * Rotates a pattern by the given amount
+ * @param {number} amount - Rotation amount (0-1)
+ * @param {Pattern} pat - Pattern to rotate
+ * @returns {Pattern} Rotated pattern
+ * @example
+ * rotate(0.25, "c d e f") // => "f c d e"
+ * @synonyms rot
+ */
+export const rotate = (amount, pat) => { /* ... */ };
+```
+
+**✅ ALWAYS include examples in JSDoc**
+**✅ ALWAYS document parameter types**
+**✅ ALWAYS describe return values**
+
+## Error Handling
+**✅ ALWAYS handle edge cases gracefully**
+```javascript
+// Good - Graceful handling
+if (!span_a || !span_b) {
+  return undefined;
+}
+
+// Good - Clear error messages
+if (!validTypes.includes(type)) {
+  throw new Error(
+    `stretch: type must be one of ${validTypes.join('|')} but got ${type}`
+  );
+}
+```
+
+**❌ NEVER throw errors without context**
+```javascript
+// Bad - No context
+throw new Error('Invalid'); // ❌
+throw 'error'; // ❌ Not even an Error object
+```
+
+## Function Design
+**✅ ALWAYS use currying for multi-argument functions**
+```javascript
+// Good - Curried function
+export const fast = curry((factor, pat) => reify(pat).fast(factor));
+
+// Enables partial application
+const doubleFast = fast(2);
+```
+
+**✅ ALWAYS validate and coerce inputs**
+```javascript
+export const rotate = register('rotate', (amount, pat) => {
+  pat = reify(pat); // Coerce to Pattern
+  amount = Fraction(amount); // Ensure Fraction
+  return pat.withTime(t => t.add(amount));
+});
+```
+
+## Test Helpers
+**✅ ALWAYS use consistent test utilities**
+```javascript
+// Standard helpers
+const st = (begin, end) => new State(ts(begin, end));
+const ts = (begin, end) => new TimeSpan(Fraction(begin), Fraction(end));
+const hap = (whole, part, value, context = {}) => 
+  new Hap(whole, part, value, context);
+
+// Pattern comparison
+const sameFirst = (a, b) => {
+  return expect(a.sortHapsByPart().firstCycle())
+    .toStrictEqual(b.sortHapsByPart().firstCycle());
+};
+```
+
+## Performance Testing
+**✅ ALWAYS benchmark performance-critical code**
+```javascript
+// bench/pattern.bench.mjs
+describe('pattern performance', () => {
+  bench('complex pattern query', () => {
+    const pat = stack(
+      sequence('a', 'b', 'c').fast(3),
+      sequence('d', 'e', 'f', 'g').fast(5)
+    );
+    pat.queryArc(0, 100);
+  });
+});
+```
+
+## Code Organization
+**✅ ALWAYS group related functions**
+```javascript
+// Time transformations together
+export { fast, slow, early, late };
+
+// Value transformations together  
+export { add, sub, mul, div };
+
+// Pattern constructors together
+export { pure, sequence, stack, cat };
+```
+
+## Null Safety
+**✅ ALWAYS handle undefined/null appropriately**
+```javascript
+// Good - Explicit handling
+export const combine = (a, b) => {
+  if (a === undefined) return b;
+  if (b === undefined) return a;
+  return a.combine(b);
+};
+```
+
+**❌ NEVER assume values are defined**
+```javascript
+// Bad - Will crash on undefined
+const result = value.toString(); // ❌
+```
+
+## Test Coverage Requirements
+**✅ ALWAYS maintain >80% coverage on core packages**
+- Test happy path
+- Test edge cases
+- Test error conditions
+- Test integration with other functions
+
+## Code Review Checklist
+Before committing:
+- ✅ All tests pass (`pnpm test`)
+- ✅ Code is formatted (`pnpm codeformat`)
+- ✅ No lint errors (`pnpm lint`)
+- ✅ JSDoc is complete
+- ✅ Examples work
+- ✅ Snapshots updated if needed
+
+## Enforcement Rules
+- Public functions must have JSDoc with @example
+- Test files must use .test.mjs suffix
+- Error messages must include context
+- Functions taking patterns must call reify()
+- Curried functions must use curry() helper

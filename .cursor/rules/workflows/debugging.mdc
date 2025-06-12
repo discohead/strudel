@@ -1,0 +1,316 @@
+# Debugging - Workflow Rules
+
+## Pattern Debugging Tools
+**✅ ALWAYS use built-in debugging methods**
+```javascript
+// Quick console output
+"c3 e3 g3".fast(2).log();
+
+// Visual pattern structure
+"a [b c] d".struct().log();
+
+// Draw pattern line
+"a b c".drawLine();
+
+// Show first cycle events
+pattern.firstCycle().forEach(hap => 
+  console.log(hap.show())
+);
+```
+
+## Debugging Pattern Output
+**✅ ALWAYS inspect hap structure**
+```javascript
+const debugPattern = (pattern, cycles = 1) => {
+  const events = pattern.queryArc(0, cycles);
+  
+  console.log(`=== Pattern Debug (${events.length} events) ===`);
+  
+  events.forEach((hap, i) => {
+    console.log(`Event ${i}:`);
+    console.log(`  Value: ${JSON.stringify(hap.value)}`);
+    console.log(`  Whole: ${hap.whole.begin.toFraction()} - ${hap.whole.end.toFraction()}`);
+    console.log(`  Part: ${hap.part.begin.toFraction()} - ${hap.part.end.toFraction()}`);
+    console.log(`  Context:`, hap.context);
+  });
+};
+
+// Usage
+debugPattern(myComplexPattern);
+```
+
+## Time Debugging
+**✅ ALWAYS check time calculations**
+```javascript
+// Debug time transformations
+const debugTime = (pattern) => {
+  const original = pattern.firstCycle();
+  const transformed = pattern.fast(2).firstCycle();
+  
+  console.log('Original times:');
+  original.forEach(h => 
+    console.log(`  ${h.whole.begin.toFraction()} - ${h.whole.end.toFraction()}`)
+  );
+  
+  console.log('Transformed times:');
+  transformed.forEach(h => 
+    console.log(`  ${h.whole.begin.toFraction()} - ${h.whole.end.toFraction()}`)
+  );
+};
+```
+
+## Mini Notation Debugging
+**✅ ALWAYS trace mini notation parsing**
+```javascript
+// Debug mini notation parsing
+import { parseMini } from '@strudel/mini';
+
+const debugMini = (miniString) => {
+  try {
+    // Get AST
+    const ast = parseMini(miniString);
+    console.log('AST:', JSON.stringify(ast, null, 2));
+    
+    // Convert to pattern
+    const pattern = mini(miniString);
+    console.log('Pattern:', pattern);
+    
+    // Show output
+    pattern.log();
+  } catch (error) {
+    console.error('Parse error:', error.message);
+    console.error('Location:', error.location);
+  }
+};
+
+// Usage
+debugMini("[a b]*2 <c d>");
+```
+
+## Audio Debugging
+**✅ ALWAYS check audio scheduling**
+```javascript
+// Debug audio events
+const debugAudio = (pattern) => {
+  const events = [];
+  
+  // Capture scheduled events
+  const mockScheduler = {
+    schedule: (time, callback) => {
+      events.push({ time, callback });
+    }
+  };
+  
+  // Run pattern through scheduler
+  pattern.queryArc(0, 1).forEach(hap => {
+    mockScheduler.schedule(hap.part.begin.valueOf(), () => {
+      console.log('Would play:', hap.value);
+    });
+  });
+  
+  // Show schedule
+  console.log('Audio schedule:');
+  events.sort((a, b) => a.time - b.time)
+        .forEach(e => console.log(`  ${e.time}: ${e.callback}`));
+};
+```
+
+## Performance Debugging
+**✅ ALWAYS profile slow patterns**
+```javascript
+// Profile pattern performance
+const profilePattern = (pattern, cycles = 10) => {
+  console.time('Total query time');
+  
+  // Measure query time
+  const start = performance.now();
+  const events = pattern.queryArc(0, cycles);
+  const queryTime = performance.now() - start;
+  
+  // Measure event processing
+  const processStart = performance.now();
+  events.forEach(hap => {
+    // Simulate processing
+    JSON.stringify(hap.value);
+  });
+  const processTime = performance.now() - processStart;
+  
+  console.timeEnd('Total query time');
+  console.log(`Query: ${queryTime.toFixed(2)}ms`);
+  console.log(`Process: ${processTime.toFixed(2)}ms`);
+  console.log(`Events: ${events.length}`);
+  console.log(`Events/cycle: ${events.length / cycles}`);
+  console.log(`ms/event: ${(queryTime / events.length).toFixed(3)}`);
+};
+
+// Usage
+profilePattern(complexPattern.fast(10));
+```
+
+## Stack Trace Analysis
+**✅ ALWAYS preserve stack traces**
+```javascript
+// Wrap pattern functions for better errors
+const wrapForDebug = (fn, name) => {
+  return (...args) => {
+    try {
+      return fn(...args);
+    } catch (error) {
+      console.error(`Error in ${name}:`, error);
+      console.error('Arguments:', args);
+      throw error; // Re-throw with context
+    }
+  };
+};
+
+// Debug specific function
+const debuggedFast = wrapForDebug(fast, 'fast');
+```
+
+## Visual Debugging
+**✅ ALWAYS use visualization for complex patterns**
+```javascript
+// ASCII visualization
+const visualizePattern = (pattern, cycles = 2) => {
+  const resolution = 32; // Characters per cycle
+  const events = pattern.queryArc(0, cycles);
+  
+  // Create grid
+  const grid = Array(cycles).fill(null).map(() => 
+    Array(resolution).fill('.')
+  );
+  
+  // Plot events
+  events.forEach(hap => {
+    const startPos = Math.floor(hap.part.begin.valueOf() * resolution);
+    const endPos = Math.floor(hap.part.end.valueOf() * resolution);
+    
+    for (let i = startPos; i < endPos; i++) {
+      const cycle = Math.floor(i / resolution);
+      const pos = i % resolution;
+      if (cycle < cycles) {
+        grid[cycle][pos] = hap.value.toString()[0];
+      }
+    }
+  });
+  
+  // Display
+  grid.forEach((row, i) => {
+    console.log(`Cycle ${i}: |${row.join('')}|`);
+  });
+};
+
+// Usage
+visualizePattern("a b c".euclidRot(5, 8));
+```
+
+## Common Issues Debugging
+
+### Pattern Not Playing
+```javascript
+// Check pattern has events
+if (pattern.firstCycle().length === 0) {
+  console.warn('Pattern produces no events!');
+}
+
+// Check scheduler is running
+console.log('Scheduler running:', scheduler.isRunning);
+
+// Check audio context state
+console.log('Audio context:', audioContext.state);
+```
+
+### Timing Issues
+```javascript
+// Compare expected vs actual timing
+const debugTiming = (pattern) => {
+  const events = pattern.firstCycle();
+  
+  events.forEach((hap, i) => {
+    const expected = i / events.length;
+    const actual = hap.whole.begin.valueOf();
+    const diff = Math.abs(expected - actual);
+    
+    if (diff > 0.001) {
+      console.warn(`Event ${i} timing off by ${diff}`);
+    }
+  });
+};
+```
+
+### Memory Leaks
+```javascript
+// Monitor pattern memory usage
+const checkMemoryUsage = () => {
+  if (performance.memory) {
+    console.log({
+      usedJSHeapSize: (performance.memory.usedJSHeapSize / 1048576).toFixed(2) + ' MB',
+      totalJSHeapSize: (performance.memory.totalJSHeapSize / 1048576).toFixed(2) + ' MB',
+      jsHeapSizeLimit: (performance.memory.jsHeapSizeLimit / 1048576).toFixed(2) + ' MB'
+    });
+  }
+};
+
+// Check before and after
+checkMemoryUsage();
+// ... run pattern code ...
+checkMemoryUsage();
+```
+
+## Browser DevTools Integration
+**✅ ALWAYS use browser debugging features**
+```javascript
+// Set breakpoints in pattern functions
+Pattern.prototype.myMethod = function() {
+  debugger; // Pause here in DevTools
+  return this.withValue(v => transform(v));
+};
+
+// Use console groups
+console.group('Pattern Analysis');
+pattern.log();
+console.log('Structure:', pattern._steps);
+console.log('Metadata:', pattern._metadata);
+console.groupEnd();
+
+// Performance profiling
+console.profile('Pattern Query');
+pattern.queryArc(0, 100);
+console.profileEnd('Pattern Query');
+```
+
+## Error Message Enhancement
+**✅ ALWAYS provide context in errors**
+```javascript
+// Enhanced error reporting
+const enhanceError = (error, context) => {
+  const enhanced = new Error(error.message);
+  enhanced.stack = error.stack;
+  enhanced.context = context;
+  
+  console.error('Pattern Error:', {
+    message: error.message,
+    pattern: context.pattern?.toString(),
+    input: context.input,
+    location: error.location
+  });
+  
+  return enhanced;
+};
+
+// Usage in pattern functions
+try {
+  return parsePattern(input);
+} catch (error) {
+  throw enhanceError(error, { input, pattern: this });
+}
+```
+
+## Enforcement Rules
+- Use .log() for quick debugging
+- Profile performance for slow patterns
+- Visualize complex pattern structures
+- Check timing precision with Fraction
+- Monitor memory usage for leaks
+- Provide context in error messages
+- Use browser DevTools effectively

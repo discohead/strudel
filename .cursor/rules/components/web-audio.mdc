@@ -1,0 +1,263 @@
+# Web Audio - Component Rules
+
+## Audio Scheduling
+**✅ ALWAYS use Cyclist for accurate timing**
+```javascript
+// Good - Use Cyclist scheduler
+import { getCyclist } from '@strudel/webaudio';
+
+const cyclist = getCyclist();
+cyclist.setPattern(pattern, (hap, time) => {
+  // Schedule with Web Audio time
+  playSound(hap.value, time);
+});
+```
+
+**❌ NEVER use setTimeout for audio timing**
+```javascript
+// Bad - Inaccurate timing
+setTimeout(() => playSound(value), delay); // ❌
+```
+
+## Audio Context Management
+**✅ ALWAYS reuse a single AudioContext**
+```javascript
+// Good - Singleton context
+let audioContext;
+export const getAudioContext = () => {
+  if (!audioContext) {
+    audioContext = new AudioContext();
+  }
+  return audioContext;
+};
+```
+
+**❌ NEVER create multiple AudioContexts**
+```javascript
+// Bad - Multiple contexts
+const ctx1 = new AudioContext(); // ❌
+const ctx2 = new AudioContext(); // ❌
+```
+
+## Sample Loading
+**✅ ALWAYS cache loaded samples**
+```javascript
+const sampleCache = new Map();
+
+export const loadSample = async (url) => {
+  if (sampleCache.has(url)) {
+    return sampleCache.get(url);
+  }
+  
+  const buffer = await fetchAndDecode(url);
+  sampleCache.set(url, buffer);
+  return buffer;
+};
+```
+
+**✅ ALWAYS handle loading errors gracefully**
+```javascript
+try {
+  const buffer = await loadSample(url);
+  return buffer;
+} catch (error) {
+  console.warn(`Failed to load ${url}:`, error);
+  return silentBuffer; // Fallback
+}
+```
+
+## Parameter Mapping
+**✅ ALWAYS map pattern values to audio params**
+```javascript
+// Map common controls
+const playNote = (value, audioTime) => {
+  const {
+    note = 60,
+    gain = 0.8,
+    pan = 0,
+    attack = 0.001,
+    decay = 0.1,
+    sustain = 0.5,
+    release = 0.1
+  } = value;
+  
+  // Apply to audio nodes
+  gainNode.gain.value = gain;
+  panNode.pan.value = pan;
+  // ... envelope etc
+};
+```
+
+**✅ ALWAYS use exponentialRampToValueAtTime for frequency**
+```javascript
+// Good - Exponential for frequency/pitch
+filter.frequency.exponentialRampToValueAtTime(
+  targetFreq, 
+  audioTime + rampTime
+);
+
+// Good - Linear for gain/pan
+gainNode.gain.linearRampToValueAtTime(
+  targetGain,
+  audioTime + rampTime
+);
+```
+
+## Envelope Generation
+**✅ ALWAYS implement proper ADSR envelopes**
+```javascript
+const envelope = (param, audioTime, adsr) => {
+  const { attack, decay, sustain, release } = adsr;
+  const peak = audioTime + attack;
+  const sustained = peak + decay;
+  
+  // Attack
+  param.setValueAtTime(0, audioTime);
+  param.linearRampToValueAtTime(1, peak);
+  
+  // Decay to sustain
+  param.linearRampToValueAtTime(sustain, sustained);
+  
+  // Schedule release
+  return () => {
+    const now = audioContext.currentTime;
+    param.cancelScheduledValues(now);
+    param.linearRampToValueAtTime(0, now + release);
+  };
+};
+```
+
+## Voice Management
+**✅ ALWAYS limit polyphony to prevent overload**
+```javascript
+const MAX_VOICES = 64;
+const activeVoices = new Set();
+
+const playVoice = (value, time) => {
+  // Steal oldest voice if at limit
+  if (activeVoices.size >= MAX_VOICES) {
+    const oldest = activeVoices.values().next().value;
+    oldest.stop();
+    activeVoices.delete(oldest);
+  }
+  
+  const voice = createVoice(value, time);
+  activeVoices.add(voice);
+};
+```
+
+## Oscillator Handling
+**✅ ALWAYS create new oscillators per note**
+```javascript
+// Good - New oscillator each time
+const playTone = (freq, time, duration) => {
+  const osc = audioContext.createOscillator();
+  osc.frequency.value = freq;
+  osc.connect(destination);
+  osc.start(time);
+  osc.stop(time + duration);
+};
+```
+
+**❌ NEVER reuse oscillators**
+```javascript
+// Bad - Can't restart oscillators
+const osc = audioContext.createOscillator();
+osc.start(); // Can only call once! ❌
+```
+
+## Filter Implementation
+**✅ ALWAYS provide standard filter types**
+```javascript
+const getFilter = (ctx, params) => {
+  const filter = ctx.createBiquadFilter();
+  
+  // Map filter types
+  filter.type = params.filtertype || 'lowpass';
+  filter.frequency.value = params.cutoff || 2000;
+  filter.Q.value = params.resonance || 1;
+  
+  // Handle special types
+  if (params.filtertype === 'ladder') {
+    // Chain multiple filters for ladder
+    return createLadderFilter(ctx, params);
+  }
+  
+  return filter;
+};
+```
+
+## Effects Chain
+**✅ ALWAYS use proper gain staging**
+```javascript
+// Good - Structured effects chain
+source
+  -> filter
+  -> distortion (with makeup gain)
+  -> delay (with mix control)
+  -> reverb (with mix control)
+  -> compressor
+  -> masterGain
+  -> destination
+```
+
+**✅ ALWAYS provide dry/wet controls**
+```javascript
+const addEffect = (input, effect, mix = 0.5) => {
+  const dry = ctx.createGain();
+  const wet = ctx.createGain();
+  const output = ctx.createGain();
+  
+  dry.gain.value = 1 - mix;
+  wet.gain.value = mix;
+  
+  input.connect(dry);
+  input.connect(effect);
+  effect.connect(wet);
+  
+  dry.connect(output);
+  wet.connect(output);
+  
+  return output;
+};
+```
+
+## Superdough Integration
+**✅ ALWAYS follow Superdough parameter conventions**
+```javascript
+// Standard Superdough params
+const params = {
+  // Oscillator
+  s: 'sawtooth',      // Sound/source
+  freq: 440,          // Frequency
+  note: 60,           // MIDI note
+  
+  // Envelope
+  attack: 0.001,
+  decay: 0.05,
+  sustain: 0.2,
+  release: 0.1,
+  
+  // Filter
+  cutoff: 2000,
+  resonance: 1,
+  
+  // Effects
+  gain: 0.8,
+  pan: 0,
+  delay: 0,
+  delaytime: 0.125,
+  delayfeedback: 0.5,
+  room: 0,
+  size: 0.9
+};
+```
+
+## Enforcement Rules
+- Audio scheduling must use Cyclist, not setTimeout
+- Single AudioContext per application
+- Samples must be cached after loading
+- Oscillators created fresh per note
+- Envelopes use proper ADSR curves
+- Effects provide wet/dry mix controls
+- Polyphony limited to prevent CPU overload
