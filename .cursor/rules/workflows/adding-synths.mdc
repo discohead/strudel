@@ -1,0 +1,83 @@
+# Adding Synths - Workflow Rules
+
+## Step 1: Prepare the Environment
+**✅ ALWAYS register built‑in synths first**
+```javascript
+import { registerSynthSounds } from 'superdough';
+registerSynthSounds();
+```
+
+## Step 2: Define the Handler
+**✅ ALWAYS implement a WebAudio graph**
+```javascript
+import {
+  registerSound,
+  getAudioContext,
+  gainNode,
+  getADSRValues,
+  getParamADSR,
+  webAudioTimeout,
+  midiToFreq
+} from 'superdough';
+
+registerSound('organ', (begin, params, onended) => {
+  const ac = getAudioContext();
+  const frequency = midiToFreq(params.note || 60);
+  const { duration, harmonics = [1, 0.5, 0.25, 0.125] } = params;
+
+  const mix = gainNode(1);
+  const env = gainNode(1);
+  mix.connect(env);
+
+  const oscillators = harmonics.map((amp, i) => {
+    const osc = ac.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = frequency * (i + 1);
+    osc.connect(gainNode(amp)).connect(mix);
+    osc.start(begin);
+    return osc;
+  });
+
+  const [a, d, s, r] = getADSRValues([
+    params.attack,
+    params.decay,
+    params.sustain,
+    params.release
+  ], 'linear', [0.01, 0.1, 0.8, 0.3]);
+  const holdEnd = begin + duration;
+  const end = holdEnd + r + 0.01;
+  getParamADSR(env.gain, a, d, s, r, 0, 1, begin, holdEnd, 'linear');
+
+  const timeout = webAudioTimeout(ac, () => {
+    oscillators.forEach(o => o.disconnect());
+    mix.disconnect();
+    env.disconnect();
+    onended();
+  }, begin, end);
+
+  return {
+    node: env,
+    stop(time) {
+      timeout.stop(time);
+      oscillators.forEach(o => o.stop(time));
+    }
+  };
+}, { type: 'synth', prebake: true });
+```
+
+## Step 3: Trigger the Synth
+**✅ ALWAYS test with `superdough`**
+```javascript
+superdough({ s: 'organ', note: 'c4', duration: 1 }, 0);
+```
+
+## Step 4: Document the Synth
+**✅ ALWAYS update README and docs**
+- Briefly describe parameters and example usage
+- Link to the implementation for reference
+
+## Enforcement Rules
+- Synth handlers must clean up nodes
+- Envelope parameters should default sensibly
+- Register with `{ type: 'synth', prebake: true }`
+- Provide code comments explaining the node graph

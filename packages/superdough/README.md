@@ -163,6 +163,22 @@ Initializes audio and makes sure it is playable after the first click in the doc
 You can call this function when the document loads.
 Then just make sure your first call of `superdough` happens after a click of something.
 
+## Custom synth example
+
+The synth list can be extended with your own implementations. The file
+`packages/superdough/synth.mjs` contains an example ``organ`` synth that
+mixes several sine oscillators.
+
+```javascript
+import { registerSynthSounds } from 'superdough';
+
+// register builtin waveforms
+registerSynthSounds();
+
+// the organ synth is registered automatically and can be played like this
+superdough({ s: 'organ', note: 'c4', duration: 1 }, 0);
+```
+
 ## Credits
 
 - [ZZFX](https://github.com/KilledByAPixel/ZzFX) used for synths starting with z
