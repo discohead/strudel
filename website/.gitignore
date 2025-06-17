@@ -21,3 +21,6 @@ pnpm-debug.log*
 
 public/tree-sitter.wasm
 public/tree-sitter-haskell.wasm
+
+# Pattern collaboration file
+current-pattern.js

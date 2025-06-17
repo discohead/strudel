@@ -1,0 +1,5 @@
+node_modules/
+.commands
+.pattern-state.json
+pattern-output.log
+.DS_Store
