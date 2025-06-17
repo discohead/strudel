@@ -186,6 +186,130 @@ note("0 2 4 5")
   .voicing()         // Smart voicing
 ```
 
+## AI Composition with Mini Notation
+
+Mini notation is the primary interface for AI-human collaborative music composition in Strudel. Understanding how to map musical intent to valid syntax is crucial for generating effective patterns.
+
+### Natural Language to Mini Notation Mappings
+
+| Musical Intent | Mini Notation | Example |
+|---------------|---------------|---------|
+| Play faster | `*n` | `"bd sd"*2` (double speed) |
+| Play slower | `/n` | `"bd sd cp"/2` (half speed) |
+| Sometimes play | `?` | `"bd sd?"` (50% chance for sd) |
+| Repeat | `!` or `*n` | `"bd!"` or `"bd*4"` |
+| Play together | `,` | `"[bd,hh]"` (kick + hihat) |
+| Then | space | `"bd sd"` (kick then snare) |
+| Every cycle | `<>` | `"<bd sd cp>"` (different each cycle) |
+| Build up | progression | `"bd . bd hh . bd hh cp"` |
+
+### Common Musical Patterns
+
+```javascript
+// Basic drum patterns
+"bd sd"                    // Kick-snare
+"bd hh sd hh"             // Basic rock beat
+"bd*2 [~ sd]"            // Syncopated
+
+// Melodic patterns
+"c3 e3 g3 c4"             // Arpeggio
+"[c3,e3,g3]"              // Chord
+"c3 <e3 g3>"              // Alternating notes
+
+// Rhythmic variations
+"bd(3,8)"                 // Euclidean rhythm
+"bd ~ ~ bd ~ ~ bd ~"      // Same as above
+"[bd cp]*2 sd"            // Mixed subdivisions
+```
+
+### Building Complex Patterns
+
+Start simple and layer complexity:
+
+```javascript
+// 1. Basic beat
+"bd sd"
+
+// 2. Add hi-hats
+"bd sd, hh*8" 
+
+// 3. Add variation
+"bd [~ sd], hh*8"
+
+// 4. Add fills every 4 bars
+"bd [~ sd], hh*8"
+  .every(4, x => x.append("[bd*2 sd*2]"))
+
+// 5. Add melodic layer
+stack(
+  "bd [~ sd], hh*8",
+  note("c3 <e3 g3> f3 <g3 c4>").s("bass")
+)
+```
+
+### Genre-Specific Templates
+
+```javascript
+// House
+stack(
+  "bd*4",                          // Four-on-floor
+  "[~ cp]*2",                      // Claps on 2 & 4
+  "[hh*2 hh]*2",                   // Hi-hat pattern
+  "[~ ~ ~ bass:2]*2"               // Syncopated bass
+)
+
+// Drum & Bass
+stack(
+  "bd ~ ~ bd ~ ~ ~ ~",             // Sparse kick
+  "~ ~ sd ~ ~ ~ sd ~",             // Snare on 3 & 7
+  "hh*16"                          // Rapid hi-hats
+).fast(2)                          // 170+ BPM feel
+
+// Ambient
+stack(
+  note("<c3 e3 g3 a3>").s("pad").slow(4),
+  "hh?"*8,                         // Sparse percussion
+  note("c5 ~ e5 ~").s("bell").often(rev)
+)
+```
+
+### Syntax Validation Guidelines
+
+When generating mini notation:
+1. **Spaces separate elements**: `"a b"` not `"ab"`
+2. **Brackets must match**: Count `[` and `]`, `<` and `>`
+3. **Modifiers apply rightward**: `"bd*2"` repeats bd, not the whole pattern
+4. **Numbers need context**: Use `"3"` for rhythm, `note("c3")` for pitch
+5. **Special chars in values need protection**: Use single quotes for complex strings
+
+### Progressive Complexity Strategies
+
+```javascript
+// Start minimal
+"bd"
+
+// Add rhythm
+"bd ~ bd ~"
+
+// Add layers
+"bd ~ bd ~, hh*4"
+
+// Add variation
+"bd ~ bd <~ sd>, hh*4"
+
+// Add dynamics
+"bd ~ bd <~ sd>, hh*4"
+  .gain("1 0.8 0.9 0.7")
+
+// Add effects
+"bd ~ bd <~ sd>, hh*4"
+  .gain("1 0.8 0.9 0.7")
+  .room(0.2)
+  .delay(0.125)
+```
+
+For deeper understanding of mini notation mechanics and advanced AI composition techniques, see [`packages/mini/CLAUDE.md`](packages/mini/CLAUDE.md).
+
 ## Common Pitfalls and Best Practices
 
 ### Pattern Evaluation

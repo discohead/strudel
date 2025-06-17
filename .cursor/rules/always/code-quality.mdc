@@ -1,3 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
 # Code Quality Standards - Strudel
 
 ## Testing Requirements
