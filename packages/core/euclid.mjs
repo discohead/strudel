@@ -160,7 +160,7 @@ export const { euclidrot, euclidRot } = register(['euclidrot', 'euclidRot'], fun
  * @returns Pattern
  * @example
  * // Add 2 empty steps at the end before rotating
- * note("c3").euclidRotPad(3,8,2,2)
+ * note("c3").euclidRotPad(3,8,2,2,0)
  * @example
  * // Add 3 steps with value 1 at the end before rotating
  * note("c3").euclidRotPad(3,8,2,3,1)
@@ -245,7 +245,7 @@ export const euclidLegatoRot = register(['euclidLegatoRot'], function (pulses, s
  * @param {number} pad number of steps to add to the end
  * @param {number|string} [padValue=0] value to use for padding (defaults to 0)
  * @example
- * note("c3").euclidLegatoRotPad(3,8,2,2)
+ * note("c3").euclidLegatoRotPad(3,8,2,2,0)
  * @example
  * // Pad with 1s instead of 0s
  * note("c3").euclidLegatoRotPad(3,8,2,2,1)

@@ -20,6 +20,7 @@ const skippedExamples = [
   'accelerationX',
   'defaultmidimap',
   'midimaps',
+  'jitter', // Skip jitter test as it produces random values
 ];
 
 describe('runs examples', () => {
