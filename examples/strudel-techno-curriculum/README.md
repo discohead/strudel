@@ -26,6 +26,7 @@ Detailed guides for each module:
 - Module 8: Structure & Arrangement
 - Module 9: Texture & Soul - Sampling
 - Module 10: The Live Coder - Performance
+- Module 11: Modular Thinking - System Design
 
 ### 🎵 Examples
 Working code examples for each module in the `examples/` directory.

@@ -164,6 +164,44 @@ note("cm7")
 - **delay**: 0-1 (mix)
 - **distort**: 0-1
 
+## Module 11: Modular Concepts
+
+### Pattern as Module
+```javascript
+// Define reusable modules
+const lfo = sine.range(0, 1).slow(8);
+const env = trigger.adsr(0.01, 0.1, 0.5, 0.2);
+const seq = choose([0, 3, 5, 7, 10]);
+
+// Connect modules
+note("c3").add(seq).lpf(lfo.range(200, 2000)).gain(env)
+```
+
+### Cross-Modulation
+```javascript
+// Patterns modulating each other
+const rhythmGen = euclid(5, 8);
+const pitchGen = choose([0, 3, 5, 7]);
+
+// Rhythm affects pitch
+const modPitch = pitchGen.mask(rhythmGen);
+
+// Pitch affects rhythm
+const modRhythm = sound("click")
+  .euclid(pitchGen.fmap(p => 3 + (p % 4)), 16);
+```
+
+### Feedback Systems
+```javascript
+// Create feedback loops
+let feedback = 0;
+note("c3")
+  .add(() => feedback)
+  .onTrigger(x => {
+    feedback = (x.value.note % 12) * 0.5;
+  })
+```
+
 ## Troubleshooting
 
 **No sound?**

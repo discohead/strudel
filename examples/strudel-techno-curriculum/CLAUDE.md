@@ -25,8 +25,8 @@ This is a comprehensive, ever-expanding curriculum for teaching hypnotic minimal
 9. **Texture & Soul** - Sample integration
 10. **The Live Coder** - Performance techniques
 
-### Expansion Modules (11+) - PLANNED
-- Module 11: Modular Thinking - Interconnected pattern systems
+### Expansion Modules (11+) - IN PROGRESS
+- Module 11: Modular Thinking - Interconnected pattern systems [COMPLETE]
 - Module 12: The Acid Module - 303 emulation mastery
 - Module 13: Industrial Techno - Noise and distortion
 - Module 14: Ambient Techno - Beatless and atmospheric

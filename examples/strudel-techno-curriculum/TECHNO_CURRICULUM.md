@@ -294,6 +294,40 @@ stack(
 
 **Assessment**: Live performance demonstrating all course concepts
 
+---
+
+### Module 11: Modular Thinking - System Design
+**Duration**: 2 weeks  
+**Learning Objectives**:
+- Design interconnected pattern systems with cross-dependencies
+- Implement feedback loops and cross-modulation between patterns
+- Build complex behaviors from simple, reusable components
+- Create emergent patterns through system interactions
+- Think architecturally about pattern relationships
+
+**Key Concepts**: Pattern networks, cross-modulation, feedback systems, emergent behavior, modular architecture
+
+**Example Pattern**:
+```javascript
+// Interconnected modular system
+const lfo = sine.range(0, 1).slow(8);
+const sequencer = choose([0, 3, 5, 7, 10]);
+
+const modularVoice = note("c3")
+  .add(sequencer)
+  .s("sawtooth")
+  .lpf(lfo.range(200, 2000))
+  .gain(trigger.adsr(0.01, 0.1, 0.5, 0.2))
+  
+// Cross-modulation network
+const crossMod = stack(
+  modularVoice.euclid(5, 8),
+  modularVoice.add(12).euclid(sequencer.fmap(n => 3 + (n % 4)), 16)
+).cpm(130)
+```
+
+**Assessment**: Create a complete modular techno system with at least 3 interconnected pattern networks demonstrating feedback and emergent behavior
+
 ## Assessment Methodology
 
 ### Continuous Assessment (60%)
