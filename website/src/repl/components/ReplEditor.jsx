@@ -4,6 +4,7 @@ import { Code } from '@src/repl/components/Code';
 import UserFacingErrorMessage from '@src/repl/components/UserFacingErrorMessage';
 import { Header } from './Header';
 import { useSettings } from '@src/settings.mjs';
+import { FileSyncIndicator } from './FileSyncIndicator';
 
 // type Props = {
 //  context: replcontext,
@@ -11,7 +12,7 @@ import { useSettings } from '@src/settings.mjs';
 
 export default function ReplEditor(Props) {
   const { context, ...editorProps } = Props;
-  const { containerRef, editorRef, error, init, pending } = context;
+  const { containerRef, editorRef, error, init, pending, fileSyncStatus } = context;
   const settings = useSettings();
   const { panelPosition, isZen } = settings;
 
@@ -25,6 +26,7 @@ export default function ReplEditor(Props) {
       </div>
       <UserFacingErrorMessage error={error} />
       {!isZen && panelPosition === 'bottom' && <HorizontalPanel context={context} />}
+      <FileSyncIndicator status={fileSyncStatus} />
     </div>
   );
 }

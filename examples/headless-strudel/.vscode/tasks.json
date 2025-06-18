@@ -1,0 +1,106 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Strudel: Start Audio Runner",
+      "type": "shell",
+      "command": "node",
+      "args": ["audio-runner.js"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": false
+      }
+    },
+    {
+      "label": "Strudel: Start Pattern Runner (OSC)",
+      "type": "shell",
+      "command": "node",
+      "args": ["pattern-runner.js"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": false
+      }
+    },
+    {
+      "label": "Strudel: Play",
+      "type": "shell",
+      "command": "node",
+      "args": ["vscode-integration.js", "play"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "silent",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "Strudel: Stop",
+      "type": "shell",
+      "command": "node",
+      "args": ["vscode-integration.js", "stop"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "silent",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "Strudel: Restart",
+      "type": "shell",
+      "command": "node",
+      "args": ["vscode-integration.js", "restart"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "silent",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "Strudel: Show Status",
+      "type": "shell",
+      "command": "node",
+      "args": ["vscode-integration.js", "status"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Strudel: Tail Output",
+      "type": "shell",
+      "command": "node",
+      "args": ["vscode-integration.js", "tail"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false
+      }
+    }
+  ]
+}

@@ -35,6 +35,7 @@ import { getRandomTune, initCode, loadModules, shareCode } from './util.mjs';
 import './Repl.css';
 import { setInterval, clearInterval } from 'worker-timers';
 import { getMetadata } from '../metadata_parser';
+import { useFileSync } from './hooks/useFileSync';
 
 const { latestCode, maxPolyphony, audioDeviceName, multiChannelOrbits } = settingsMap.get();
 let modulesLoading, presets, drawContext, clearCanvas, audioReady;
@@ -64,6 +65,24 @@ export function useReplContext() {
   const shouldUseWebaudio = audioEngineTarget !== audioEngineTargets.osc;
   const defaultOutput = shouldUseWebaudio ? webaudioOutput : superdirtOutput;
   const getTime = shouldUseWebaudio ? getAudioContextCurrentTime : getPerformanceTimeSeconds;
+  
+  const [replState, setReplState] = useState({});
+  const { started, isDirty, error, activeCode, pending } = replState;
+  const editorRef = useRef();
+  const containerRef = useRef();
+  
+  // File sync hook
+  const fileSync = useFileSync((content) => {
+    // Handle external file changes
+    if (editorRef.current) {
+      // Get current code from CodeMirror view
+      const currentCode = editorRef.current.view?.state.doc.toString() || editorRef.current.code || '';
+      if (content !== currentCode) {
+        console.log('[REPL] Setting code from file sync');
+        editorRef.current.setCode(content);
+      }
+    }
+  });
 
   const init = useCallback(() => {
     const drawTime = [-2, 2];
@@ -118,6 +137,9 @@ export function useReplContext() {
           setViewingPatternData(userPattern.update(id, data).data);
         }
         setActivePattern(id);
+        
+        // Save to file
+        fileSync.writePattern(code);
       },
       bgFill: false,
     });
@@ -126,9 +148,16 @@ export function useReplContext() {
     // init settings
     initCode().then(async (decoded) => {
       let code, msg;
+      
+      // First check for file content
+      const fileContent = await fileSync.loadInitialContent();
+      
       if (decoded) {
         code = decoded;
         msg = `I have loaded the code from the URL.`;
+      } else if (fileContent) {
+        code = fileContent;
+        msg = `Pattern loaded from current-pattern.js file.`;
       } else if (latestCode) {
         code = latestCode;
         msg = `Your last session has been loaded!`;
@@ -143,12 +172,7 @@ export function useReplContext() {
     });
 
     editorRef.current = editor;
-  }, []);
-
-  const [replState, setReplState] = useState({});
-  const { started, isDirty, error, activeCode, pending } = replState;
-  const editorRef = useRef();
-  const containerRef = useRef();
+  }, [fileSync]);
 
   // this can be simplified once SettingsTab has been refactored to change codemirrorSettings directly!
   // this will be the case when the main repl is being replaced
@@ -224,6 +248,7 @@ export function useReplContext() {
     error,
     editorRef,
     containerRef,
+    fileSyncStatus: fileSync.syncStatus,
   };
   return context;
 }

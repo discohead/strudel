@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Headless Strudel Audio Engine</title>
+  <script type="module">
+    // Import from local build instead of CDN
+    import { Pattern, controls, resetGlobalEffects } from '@strudel/core';
+    import { transpiler } from '@strudel/transpiler';
+    import { registerSynthSounds, initAudioOnFirstClick, getAudioContext, webaudioOutput, samples } from '@strudel/webaudio';
+    import { mini } from '@strudel/mini';
+    import * as tonal from '@strudel/tonal';
+
+    // Initialize audio context
+    await initAudioOnFirstClick();
+    
+    // Register sounds
+    await registerSynthSounds();
+    
+    // Load default samples
+    window.samples = samples;
+    
+    // Global state
+    window.audioInitialized = false;
+    window.currentPattern = null;
+    window.isPlaying = false;
+    
+    // Make Strudel functions global
+    const funcs = {
+      ...controls,
+      ...tonal,
+      mini,
+      s: controls.s,
+      note: controls.note,
+      stack: Pattern.stack,
+      sequence: Pattern.sequence,
+      cat: Pattern.cat,
+      silence: controls.silence,
+      hush: () => {
+        resetGlobalEffects();
+        controls.silence.play();
+      }
+    };
+    
+    Object.entries(funcs).forEach(([name, func]) => {
+      window[name] = func;
+    });
+    
+    // Initialize audio on first interaction
+    window.initAudio = async () => {
+      if (window.audioInitialized) return true;
+      
+      try {
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') {
+          await ctx.resume();
+        }
+        window.audioInitialized = true;
+        console.log('Audio context initialized:', ctx.state);
+        return true;
+      } catch (error) {
+        console.error('Failed to initialize audio:', error);
+        return false;
+      }
+    };
+    
+    // Evaluate pattern
+    window.evalPattern = async (code) => {
+      try {
+        // Initialize audio if needed
+        await window.initAudio();
+        
+        // Stop current pattern if playing
+        if (window.isPlaying) {
+          window.hush();
+          window.isPlaying = false;
+        }
+        
+        // Transpile the code
+        const transpiled = await transpiler(code, {
+          wrapAsync: false,
+          simpleLiterals: true,
+          processDoubleQuotes: true
+        });
+        
+        // Evaluate
+        const pattern = eval(transpiled.output);
+        
+        // Set output
+        if (pattern && pattern.constructor && pattern.constructor.name === 'Pattern') {
+          window.currentPattern = pattern.withDefaultOutput(webaudioOutput);
+        } else {
+          throw new Error('Code did not return a Pattern');
+        }
+        
+        console.log('Pattern evaluated successfully');
+        return { success: true };
+      } catch (error) {
+        console.error('Pattern evaluation error:', error);
+        return { success: false, error: error.message };
+      }
+    };
+    
+    // Play pattern
+    window.playPattern = () => {
+      if (!window.currentPattern) {
+        return { success: false, error: 'No pattern loaded' };
+      }
+      
+      try {
+        window.currentPattern.play();
+        window.isPlaying = true;
+        console.log('Playing pattern');
+        return { success: true };
+      } catch (error) {
+        console.error('Play error:', error);
+        return { success: false, error: error.message };
+      }
+    };
+    
+    // Stop pattern
+    window.stopPattern = () => {
+      try {
+        window.hush();
+        window.isPlaying = false;
+        console.log('Stopped pattern');
+        return { success: true };
+      } catch (error) {
+        console.error('Stop error:', error);
+        return { success: false, error: error.message };
+      }
+    };
+    
+    // Get audio context info
+    window.getAudioInfo = () => {
+      const ctx = getAudioContext();
+      if (!ctx) return { initialized: false };
+      
+      return {
+        initialized: window.audioInitialized,
+        state: ctx.state,
+        currentTime: ctx.currentTime,
+        sampleRate: ctx.sampleRate,
+        latency: ctx.baseLatency || ctx.outputLatency || 0,
+        isPlaying: window.isPlaying
+      };
+    };
+    
+    console.log('Headless Strudel Audio Engine Ready');
+  </script>
+</head>
+<body>
+  <h1>Headless Strudel Audio Engine</h1>
+  <p>This page is running in headless mode to provide Web Audio output.</p>
+  <button onclick="initAudio()">Init Audio</button>
+</body>
+</html>
