@@ -24,6 +24,14 @@ Each package has its own CLAUDE.md file with detailed guidance:
 **Musical Extensions:**
 - [`packages/tonal/CLAUDE.md`](packages/tonal/CLAUDE.md) - Musical theory functions
 
+## Development Notes
+
+### Validating Strudel Code
+Always use `packages/transpiler/validate.mjs` to validate example Strudel REPL code, especially when generating modules for the strudel-techno-curriculum. Example usage:
+```bash
+node packages/transpiler/validate.mjs 's("bd sd")'
+```
+
 ## Common Development Commands
 
 ### Setup and Installation

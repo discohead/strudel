@@ -28,7 +28,7 @@ s("mysample")                    // Play sample
 .begin(0.25)                    // Start position (0-1)
 .end(0.75)                      // End position (0-1)
 .loop(1)                        // Loop sample
-.reverse(1)                     // Reverse playback
+.rev()                          // Reverse playback
 
 // Processing
 .gain(0.8)                      // Volume
@@ -93,7 +93,7 @@ const vinyl = s("vinyl")
 
 // Field recording ambience
 const fieldRec = s("trainstation")
-  .begin(slow(64, line(0, 0.9)))  // Slowly scan through sample
+  .begin(slow(64, saw.range(0, 0.9)))  // Slowly scan through sample
   .end(x => x.begin + 0.1)
   .speed(0.5)
   .room(0.5)
@@ -128,7 +128,7 @@ const vocalGrain = s("vocal")
   .speed(choose([0.5, 0.75, 1, 1.5]))
   .room(0.7)
   .gain(0.4)
-  .often(x => x.reverse())
+  .often(x => x.rev())
 
 // Pitched vocal stabs
 const vocalStab = s("vocal_hit")
@@ -225,7 +225,7 @@ const texture = stack(
     .speed(choose([0.5, 1, 2]))
     .gain(0.5)
     .struct("~ ~ x ~ ~ ~ ~ x")
-    .reverse(choose([0, 1]))
+    .rev(choose([0, 1]))
 ).lpf(3000).room(0.3)
 ```
 
@@ -237,7 +237,7 @@ const resample = s("bounce")  // Your recorded Strudel output
   .chop(32)
   .n(shuffle(run(32)))  // Randomize slice order
   .speed(choose([0.5, 1, 1.5, 2]))
-  .sometimes(x => x.reverse())
+  .sometimes(x => x.rev())
   .gain(0.5)
   
 // Feedback system (careful with levels!)
@@ -352,8 +352,8 @@ stack(
 // Transition effects
 const riser = s("sweep_up")
   .speed(0.5)
-  .gain(slow(8, line(0, 0.8)))
-  .lpf(slow(8, line(500, 10000)))
+  .gain(slow(8, saw.range(0, 0.8)))
+  .lpf(slow(8, saw.range(500, 10000)))
   
 const impact = s("crash")
   .speed(0.8)
@@ -435,7 +435,7 @@ s("loose_loop")
 s("full_sample")
   .hpf(300)       // Remove lows
   .lpf(5000)      // Remove extreme highs
-  .notch(1000, 5) // Carve mid frequency
+  .bandf(1000, 5) // Carve mid frequency with band filter
 ```
 
 ## Assessment Criteria

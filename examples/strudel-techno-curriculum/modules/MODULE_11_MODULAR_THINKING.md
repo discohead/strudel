@@ -17,47 +17,49 @@ By the end of this module, you will be able to:
 Each pattern becomes a module that can send and receive control signals:
 
 ```javascript
-// Define modular components
-const lfo = sine.range(0, 1).slow(8);
-const envelope = trigger.adsr(0.01, 0.1, 0.5, 0.2);
-const sequencer = choose([0, 3, 5, 7, 10]);
-
-// Connect modules to create behavior
-const modularVoice = note("c3")
-  .add(sequencer)
+// Modular voice using Strudel patterns
+note(choose(["c3", "eb3", "g3", "bb3", "c4"]))
   .s("sawtooth")
-  .lpf(lfo.range(200, 2000))
-  .gain(envelope)
+  .cutoff(sine.range(200, 2000).slow(8))
+  .gain(saw.range(0.3, 0.8).slow(4))
+  .release(0.2)
+  .cpm(130)
 ```
 
 ### Cross-Modulation Systems
 
 ```javascript
-// Pattern A modulates Pattern B and vice versa
-const rhythmGenerator = euclid(5, 8);
-const pitchPattern = "c3 eb3 g3 bb3".slow(2);
-
-// Rhythm affects pitch selection
-const rhythmicPitch = pitchPattern.mask(rhythmGenerator);
-
-// Pitch affects rhythm density
-const pitchDrivenRhythm = sound("click")
-  .euclid(rhythmicPitch.fmap(x => x.note % 12), 16);
+// Cross-modulation between rhythm and pitch
+stack(
+  // Base rhythm
+  s("bd*4").gain(0.9),
+  
+  // Melodic pattern modulated by rhythm
+  note("c3 eb3 g3 bb3")
+    .s("sawtooth")
+    .euclid(5, 8)
+    .cutoff(perlin.range(400, 2000))
+    .gain(0.5),
+    
+  // Rhythmic pattern modulated by pitch
+  s("click*16")
+    .gain(sine.range(0.1, 0.4).slow(4))
+    .pan(saw.range(-0.8, 0.8).slow(3))
+).cpm(130)
 ```
 
 ### Feedback Networks
 
 ```javascript
-// Create a feedback system where output affects input
-let feedbackBuffer = 0;
-
-const feedbackPattern = note("c3")
-  .add(x => feedbackBuffer)
-  .s("fm4")
-  .fmi(x => {
-    feedbackBuffer = (x.value.note % 12) * 0.5;
-    return feedbackBuffer;
-  })
+// Simulated feedback using pattern modulation
+note("c3 eb3 g3 bb3")
+  .s("fm")
+  .fmi(perlin.range(0, 8))
+  .fmh(sine.range(1, 4).slow(8))
+  .gain(0.5)
+  .room(0.3)
+  .delay(0.25)
+  .cpm(130)
 ```
 
 ## Modular Design Patterns
@@ -67,21 +69,25 @@ const feedbackPattern = note("c3")
 Emulating modular clock division for polyrhythmic structures:
 
 ```javascript
-// Master clock
-const masterClock = signal("t*16");
-
-// Clock dividers
-const div2 = masterClock.mask("t f");
-const div3 = masterClock.mask("t f f");
-const div4 = masterClock.mask("t f f f");
-const div5 = masterClock.mask("t f f f f");
-
-// Patch to different voices
-const clockSystem = stack(
-  sound("bd").mask(div4).gain(0.9),
-  sound("cp").mask(div3).gain(0.7),
-  sound("hh").mask(div2).gain(0.4),
-  sound("fm").mask(div5).gain(0.5).n(rand.range(0, 12))
+// Clock division using euclidean rhythms and masks
+stack(
+  // Main kick - every 4
+  s("bd*4").gain(0.9),
+  
+  // Snare - every 3 
+  s("sd*8").mask("t f f").gain(0.7),
+  
+  // Hi-hat - rapid
+  s("hh*16").gain(0.4),
+  
+  // FM hits - euclidean pattern
+  note("c4").s("fm")
+    .euclid(5, 16)
+    .fmi(rand.range(0, 4))
+    .gain(0.5),
+    
+  // Percussion - polyrhythmic
+  s("rim*12").mask("t f f f").gain(0.3)
 ).cpm(130)
 ```
 
@@ -90,30 +96,28 @@ const clockSystem = stack(
 Industrial techno through interconnected modules:
 
 ```javascript
-// Oscillator bank
-const osc1 = note("c2").s("sawtooth");
-const osc2 = note("c2").add(0.1).s("square");
-const osc3 = note("c2").sub(0.1).s("triangle");
-
-// Modulation sources
-const lfo1 = sine.slow(4);
-const lfo2 = saw.slow(7);
-const lfo3 = square.slow(3);
-
-// Filter network
-const filter1 = x => x.lpf(lfo1.range(200, 2000)).resonance(10);
-const filter2 = x => x.hpf(lfo2.range(100, 1000));
-const filter3 = x => x.bpf(lfo3.range(300, 1500)).bpq(5);
-
-// Routing matrix
-const surgeonPatch = stack(
-  osc1.chain(filter1, filter2).gain(0.3),
-  osc2.chain(filter2, filter3).gain(0.3),
-  osc3.chain(filter3, filter1).gain(0.3)
+// Surgeon-style industrial modular patch
+stack(
+  // Oscillator 1 - detuned saw
+  note("c2").s("sawtooth")
+    .lpf(sine.range(200, 2000).slow(4))
+    .resonance(10)
+    .gain(0.3),
+    
+  // Oscillator 2 - square with HPF
+  note("c2").add(0.1).s("square")
+    .hpf(saw.range(100, 1000).slow(7))
+    .gain(0.3),
+    
+  // Oscillator 3 - triangle with BPF
+  note("c2").sub(0.1).s("triangle")
+    .lpf(perlin.range(300, 1500).slow(3))
+    .gain(0.3)
 )
+  .add(perlin.range(-0.1, 0.1)) // slight detuning
   .distort(0.4)
   .shape(0.3)
-  .struct("t(3,8)")
+  .euclid(3, 8)
   .cpm(140)
 ```
 

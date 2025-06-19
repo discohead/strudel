@@ -308,7 +308,8 @@ chord("<Dm7 G7 Cmaj7 %> <Em7 A7 Dm7 G7>")
 
 ### Voicing Options
 ```javascript
-{
+// Example voicing options object
+chord("C").voicing({
   anchor: "C4",           // Fixed bass note
   range: ["C3", "C6"],   // Note range
   notes: 4,              // Voice count
@@ -316,7 +317,7 @@ chord("<Dm7 G7 Cmaj7 %> <Em7 A7 Dm7 G7>")
   topNote: "E5",         // Fixed top note
   bottomNote: "C3",      // Fixed bottom
   inversions: 1,         // Specific inversion
-}
+})
 ```
 
 ## iReal Pro Integration

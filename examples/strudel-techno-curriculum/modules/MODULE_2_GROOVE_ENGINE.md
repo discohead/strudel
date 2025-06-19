@@ -159,7 +159,7 @@ stack(
   sound("bd*4").gain(0.9),
   sound("~ cp ~ cp").gain(0.7),
   sound("hh*16").euclid(11, 16).gain(0.4),
-  sound("hh*32").gain(0.15).degrade(0.7),  // Random ghost notes
+  sound("hh*32").gain(0.15).degradeBy(0.7),  // Random ghost notes
   sound("rim").euclid(3, 7).gain(0.3).pan(0.7)
 ).cpm(130)
 ```
@@ -180,7 +180,7 @@ stack(
     
   // Percussion in stereo field
   sound("rim").euclid(5, 8).gain(0.4).pan(0.2),
-  sound("shaker*16").gain(0.2).degrade(0.5).pan(0.8)
+  sound("shaker*16").gain(0.2).degradeBy(0.5).pan(0.8)
 ).cpm(132)
 ```
 
@@ -250,7 +250,7 @@ stack(
   sound("hh*16")
     .sometimes(x => x.fast(2))
     .gain(0.3)
-    .degrade(0.8),
+    .degradeBy(0.8),
     
   // Random accents
   sound("oh")
@@ -268,7 +268,7 @@ stack(
   
   // Claps fade in
   sound("~ cp ~ cp")
-    .gain(slow(16, line(0, 0.7))),
+    .gain(slow(16, saw.range(0, 0.7))),
     
   // Hi-hats get busier
   sound("hh*16")

@@ -148,7 +148,7 @@ stack(
   // Textural layer
   sound("shaker*32")
     .gain(0.1)
-    .degrade(0.8)
+    .degradeBy(0.8)
     .pan(sine.range(0.3, 0.7).slow(16))
 ).cpm(125)
 ```

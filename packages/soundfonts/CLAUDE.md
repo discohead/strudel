@@ -221,6 +221,6 @@ note("c3 e3 g3 c4")
 ```javascript
 note("c3 e3 g3 c4")
   .s("gm_piano")
-  .velocity(0.7.add(rand.range(-0.1, 0.1)))
-  .late(0.002.mul(rand))
+  .velocity(rand.range(0.6, 0.8))  // Velocity variation
+  .late(rand.range(0, 0.002))      // Subtle timing variation
 ```

@@ -21,7 +21,7 @@ The key oscillators for techno bass:
 note("c1*8").s("sine").release(0.1).gain(0.8)
 
 // Saw: Classic acid/techno bass
-note("c1*8").s("saw").lpf(400).release(0.1).gain(0.7)
+note("c1*8").s("sawtooth").lpf(400).release(0.1).gain(0.7)
 
 // Square: Hollow, powerful bass
 note("c1*8").s("square").lpf(300).release(0.1).gain(0.7)
@@ -38,7 +38,7 @@ stack(
   
   // Bass avoids the kick
   note("c1 ~ c1 c1 ~ c1 ~ c1")
-    .s("saw")
+    .s("sawtooth")
     .lpf(400)
     .release(0.1)
     .gain(0.7)
@@ -65,7 +65,7 @@ stack(
 ```javascript
 // Continuous movement
 note("c1*8")
-  .s("saw")
+  .s("sawtooth")
   .lpf(400)
   .release(0.08)
   .gain("0.8 0.6")  // Accent pattern
@@ -89,7 +89,7 @@ note("c1 ~ ~ c1 ~ c1 ~ ~")
 #### Octave Jumps
 ```javascript
 note("c1 c1 c2 c1 ~ c1 c2 ~")
-  .s("saw")
+  .s("sawtooth")
   .lpf(600)
   .release(0.1)
   .gain(0.7)
@@ -107,7 +107,7 @@ note("<c1 eb1 f1 g1>*2")
 #### Call and Response
 ```javascript
 note("c1 ~ ~ ~ eb1 ~ ~ ~ f1 ~ ~ ~ c1 ~ ~ ~")
-  .s("saw")
+  .s("sawtooth")
   .lpf(500)
   .release(0.2)
   .gain(0.7)
@@ -119,7 +119,7 @@ note("c1 ~ ~ ~ eb1 ~ ~ ~ f1 ~ ~ ~ c1 ~ ~ ~")
 ```javascript
 // Classic acid bass movement
 note("c1*8")
-  .s("saw")
+  .s("sawtooth")
   .lpf(sine.range(200, 2000).slow(4))  // Filter sweep
   .resonance(10)
   .release(0.1)
@@ -130,7 +130,7 @@ note("c1*8")
 ```javascript
 // Dynamic envelope shapes
 note("c1*8")
-  .s("saw")
+  .s("sawtooth")
   .attack(choose([0.001, 0.01, 0.02]))
   .release(choose([0.05, 0.1, 0.2]))
   .lpf(500)
@@ -223,7 +223,7 @@ stack(
     
   // Bass owns 80-300Hz  
   note("c1*8")
-    .s("saw")
+    .s("sawtooth")
     .hpf(80)
     .lpf(300)
     .release(0.1)
@@ -241,7 +241,7 @@ stack(
   sound("bd*4").gain(0.9),
   
   note("c1*8")
-    .s("saw")
+    .s("sawtooth")
     .lpf(400)
     .release(0.1)
     .gain(0.7)
@@ -301,7 +301,7 @@ const bassTheme = "c1 ~ c1 c1 ~ c1 ~ c1";
 // Variation 1: Octave movement
 note(bassTheme)
   .add("<0 0 12 0>")
-  .s("saw")
+  .s("sawtooth")
   .lpf(400)
   .release(0.1)
   .gain(0.7)
@@ -309,14 +309,14 @@ note(bassTheme)
 // Variation 2: Note changes
 note(bassTheme)
   .add("<0 3 5 7>")  // Add minor scale degrees
-  .s("saw")
+  .s("sawtooth")
   .lpf(400)
   .release(0.1)
   .gain(0.7)
 
 // Variation 3: Rhythm changes
 note("c1 c1 ~ c1 c1 ~ c1 ~")
-  .s("saw")
+  .s("sawtooth")
   .lpf(400)
   .release(0.1)
   .gain(0.7)
@@ -359,13 +359,13 @@ stack(
   sound("bd*4").gain(0.9),
   
   note("c1*8")
-    .s("saw")
+    .s("sawtooth")
     // Filter opens over time
-    .lpf(slow(32, line(200, 1000)))
+    .lpf(slow(32, saw.range(200, 1000)))
     // Pattern gets busier
-    .mask(slow(32, line(0.5, 1)))
+    .mask(slow(32, saw.range(0.5, 1)))
     // Resonance increases
-    .resonance(slow(32, line(0, 20)))
+    .resonance(slow(32, saw.range(0, 20)))
     .release(0.1)
     .gain(0.7)
 ).cpm(130)
@@ -380,7 +380,7 @@ stack(
   sound("bd*4").gain(0.9),
   // Bass avoids kick frequencies and timing
   note("~ c1 ~ c1 ~ c1 ~ c1")
-    .s("saw")
+    .s("sawtooth")
     .hpf(80)  // High-pass to avoid kick
     .lpf(300)
     .release(0.08)
@@ -408,7 +408,7 @@ stack(
 **Solution**: Add movement
 ```javascript
 note("c1*8")
-  .s("saw")
+  .s("sawtooth")
   .lpf(sine.range(300, 800).slow(8))
   .resonance(sine.range(5, 15).slow(16))
   .gain(sine.range(0.6, 0.8).fast(4))

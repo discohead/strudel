@@ -16,20 +16,30 @@ By the end of this module, you will be able to:
 ### Probability Functions in Strudel
 
 ```javascript
-// Basic probability
-.sometimes(x => x.rev())        // 50% chance
-.sometimesBy(0.25, x => x.fast(2))  // 25% chance
-.often(x => x.add(12))          // 75% chance
-.rarely(x => x.gain(0))         // 10% chance
-.almostAlways(x => x.pan(0.8))  // 90% chance
+// Basic probability on a pattern
+note("c3 eb3 g3 bb3")
+  .sometimes(x => x.rev())        // 50% chance
+  .sometimesBy(0.25, x => x.fast(2))  // 25% chance
+  .often(x => x.add(12))          // 75% chance
+  .rarely(x => x.gain(0))         // 10% chance
+  .almostAlways(x => x.pan(0.8))  // 90% chance
+  .s("fm").cpm(130)
 
 // Degradation
-.degrade()                      // Random 50% note removal
-.degradeBy(0.3)                 // 30% chance of removal
+sound("hh*16")
+  .degrade()                      // Random 50% note removal
+  .gain(0.4).cpm(130)
+
+sound("rim*8")
+  .degradeBy(0.3)                 // 30% chance of removal
+  .gain(0.5).cpm(130)
 
 // Random selection
-choose(["c3", "eb3", "g3"])     // Pick one randomly
-wchoose([["c3", 4], ["eb3", 2], ["g3", 1]])  // Weighted choice
+note(choose(["c3", "eb3", "g3"]))     // Pick one randomly
+  .s("bass").cpm(130)
+
+note(wchoose([["c3", 4], ["eb3", 2], ["g3", 1]]))  // Weighted choice
+  .s("bass").cpm(130)
 ```
 
 ### Arpeggiator Patterns
@@ -87,7 +97,7 @@ const evolvingHook = note("c3 eb3 g3 c4")
 
 // Different probabilities per cycle
 const cyclicProbability = note("c3*8")
-  .s("saw")
+  .s("sawtooth")
   .sometimesBy(
     slow(8, cat(0.1, 0.3, 0.5, 0.8)),  // Changing probability
     x => x.add(7)
@@ -146,7 +156,7 @@ const detroitArp = note("c3 eb3 g3 bb3 c4 bb3 g3 eb3")
 // Acid arpeggio
 const acidArp = note("c2 c3 eb3 g3")
   .fast(2)
-  .s("saw")
+  .s("sawtooth")
   .lpf(sine.range(200, 3000).fast(4))
   .resonance(20)
   .sometimes(x => x.add(12))
@@ -185,7 +195,7 @@ const directionalArp = cat(
   note("c3 e3 g3 e3").slow(2),          // Up-down
   note("g3 e3 g3 c4").slow(2)           // Middle-out
 )
-.s("saw")
+.s("sawtooth")
 .lpf(1500)
 .release(0.1)
 .gain(0.5)
@@ -253,7 +263,7 @@ const constrainedHook = note("c3")
   .add(choose([0, 3, 5, 7, 10]))  // Stay in minor pentatonic
   .sometimesBy(0.3, x => x.add(12))  // Occasionally jump octave
   .rarely(x => x.add(-12))  // Rarely drop octave
-  .s("saw")
+  .s("sawtooth")
   .lpf(1000)
   .release(0.1)
   .struct("x ~ x x ~ x ~ x")  // Rhythmic constraint
@@ -329,7 +339,7 @@ const plastikmanHook = note("c3")
 const pasHook = note("0 0 0 3 0 0 5 0")
   .add(slow(128, run(0, 12)))  // Slowly transpose up
   .scale("c:minor")
-  .s("saw")
+  .s("sawtooth")
   .lpf(sine.range(400, 1200).slow(64))
   .resonance(15)
   .release(0.05)
@@ -389,7 +399,7 @@ Create an arpeggio that changes character:
 const arp = note("c3 e3 g3 b3")
   .add(slow(32, "<0 3 5 7>"))  // Change mode
   .fast(slow(64, line(1, 4)))   // Accelerate
-  .s("saw")
+  .s("sawtooth")
   .lpf(slow(32, sine.range(500, 3000)))
   .release(slow(32, line(0.2, 0.05)))
   .gain(0.5)

@@ -17,18 +17,20 @@ By the end of this module, you will be able to:
 
 ```javascript
 // Essential live commands
-hush()                    // Stop all sound immediately
+// hush()                    // Stop all sound immediately (run this command when needed)
 silence                   // Empty pattern (for transitions)
 
 // Performance utilities
-.cpm(130)                // Tempo control
-.gain(0.8)               // Master volume
-.orbit(1)                // Routing for effects
+// pattern.cpm(130)          // Tempo control
+// pattern.gain(0.8)         // Master volume
+// pattern.orbit(1)          // Routing for effects
+```
 
-// Quick modifications
-Ctrl+Enter               // Evaluate code
-Ctrl+.                   // Panic stop
-Ctrl+/                   // Comment/uncomment line
+```javascript
+// Quick modifications (keyboard shortcuts)
+// Ctrl+Enter               // Evaluate code
+// Ctrl+.                   // Panic stop
+// Ctrl+/                   // Comment/uncomment line
 ```
 
 ### Code Organization for Performance
@@ -68,6 +70,13 @@ stack(
 Gradual intensity increase:
 
 ```javascript
+// Define elements first
+const kick = sound("bd*4").gain(0.9);
+const bass = note("c1*8").s("bass").release(0.1).gain(0.7);
+const hats = sound("hh*16").euclid(11, 16).gain(0.4);
+const clap = sound("~ cp ~ cp").gain(0.7);
+const lead = note("c3 eb3 g3 c4").s("sawtooth").lpf(1000).gain(0.5);
+
 // Start minimal
 stack(
   kick
@@ -108,6 +117,11 @@ Creating dramatic moments:
 
 ```javascript
 // Full pattern playing...
+// Assuming these elements are already defined:
+// const kick = sound("bd*4").gain(0.9);
+// const bass = note("c1*8").s("bass").release(0.1).gain(0.7);
+// const hats = sound("hh*16").euclid(11, 16).gain(0.4);
+// const clap = sound("~ cp ~ cp").gain(0.7);
 
 // Sudden breakdown (evaluate quickly)
 stack(
@@ -115,14 +129,14 @@ stack(
   bass.lpf(300).room(0.5),  // Filter and reverb bass
   // hats,  // Remove hats
   // clap,  // Remove clap
-  pad.gain(0.4)  // Add atmospheric element
+  note("c2").s("pad").attack(2).release(4).gain(0.4)  // Add atmospheric element
 ).cpm(130)
 
 // Build tension
 stack(
   bass.lpf(sine.range(300, 2000).slow(8)),  // Filter sweep
-  pad.gain(sine.range(0.4, 0.7).slow(4)),   // Volume swell
-  s("riser").gain(slow(8, line(0, 0.8)))    // Riser
+  note("c2").s("pad").attack(2).release(4).gain(sine.range(0.4, 0.7).slow(4)),   // Volume swell
+  s("riser").gain(saw.range(0, 0.8).slow(8))    // Riser
 ).cpm(130)
 
 // Drop back in
@@ -167,6 +181,11 @@ loop.euclid(7, 8).cpm(130)  // Euclidean remix
 Moving between patterns smoothly:
 
 ```javascript
+// Define elements if not already defined
+const kick = sound("bd*4").gain(0.9);
+const bass = note("c1*8").s("bass").release(0.1).gain(0.7);
+const hats = sound("hh*16").euclid(11, 16).gain(0.4);
+
 // Pattern A playing...
 const patternA = stack(kick, bass, hats).cpm(130);
 
@@ -204,6 +223,12 @@ stack(
 ### 1. Macro Control System
 
 ```javascript
+// Define base elements
+const kick = sound("bd*4");
+const bass = note("c1*8").s("bass").release(0.1);
+const hats = sound("hh*16").euclid(11, 16);
+const clap = sound("~ cp ~ cp");
+
 // Performance macros
 let energy = 0.5;
 let chaos = 0;
@@ -227,7 +252,7 @@ const perform = () => stack(
   clap
     .gain(energy * 0.8)
     .delay(space * 0.8)
-    .when(x => energy > 0.7, x => x.fast(2))
+    .fast(energy > 0.7 ? 2 : 1)  // Speed up when high energy
 ).cpm(130);
 
 // During performance, just change values:
@@ -241,6 +266,14 @@ const perform = () => stack(
 Pre-loaded patterns for quick access:
 
 ```javascript
+// Define all elements for pattern bank
+const kick = sound("bd*4").gain(0.9);
+const bass = note("c1*8").s("bass").release(0.1).gain(0.7);
+const hats = sound("hh*16").euclid(11, 16).gain(0.4);
+const clap = sound("~ cp ~ cp").gain(0.7);
+const lead = note("c3 eb3 g3 c4").s("sawtooth").lpf(1000).gain(0.5);
+const pad = note("c2").s("pad").attack(2).release(4);
+
 // Pattern bank
 const patterns = {
   intro: stack(kick, hats.gain(0.3)),
@@ -267,7 +300,7 @@ const patterns = {
     lead.gain(0.7)
   ),
   
-  outro: stack(kick, bass.gain(x => 1 - x.cycle / 32))
+  outro: stack(kick, bass.gain(saw.range(1, 0).slow(32)))
 };
 
 // Quick pattern switching:
@@ -307,7 +340,7 @@ const emergency = {
 };
 
 // Quick recovery commands
-// hush(); emergency.minimal  // Stop and restart minimal
+// hush(); emergency.minimal.cpm(130)  // Stop and restart minimal
 // Ctrl+Z to undo last change
 // Keep previous working code in comments
 ```
@@ -416,7 +449,7 @@ stack(
 // Start big
 stack(
   sound("bd*4").gain(0.95).distort(0.3),
-  note("c1*16").s("saw").lpf(sine.range(200, 4000).fast(2)),
+  note("c1*16").s("sawtooth").lpf(sine.range(200, 4000).fast(2)),
   sound("cp*4").gain(0.8),
   sound("hh*32").gain(0.5).pan(rand)
 ).cpm(140)
@@ -440,6 +473,9 @@ const development = stack(
   sound("bd*4").gain(0.7),
   note("c1 eb1 g1 c2").s("piano").gain(0.5)
 );
+
+// Define lead for climax
+const lead = note("c4 eb4 g4 c5").s("sawtooth").lpf(2000);
 
 // Chapter 3: Climax
 const climax = stack(
@@ -485,13 +521,21 @@ Practice recovering from:
 ```javascript
 // Have these ready:
 const safe1 = sound("bd*4").cpm(130);  // Can't fail
-const safe2 = stack(kick, bass).cpm(130);  // Pre-tested
+const safe2 = stack(
+  sound("bd*4").gain(0.9),
+  note("c1*8").s("bass").release(0.1).gain(0.7)
+).cpm(130);  // Pre-tested
 // Practice typing them blind
 ```
 
 ### Challenge: Losing track of time
 **Solution**: Visual cues
 ```javascript
+// Define elements for this example
+const kick = sound("bd*4").gain(0.9);
+const bass = note("c1*8").s("bass").release(0.1).gain(0.7);
+const hats = sound("hh*16").euclid(11, 16).gain(0.4);
+
 // Add comments during performance
 stack(
   kick,  // 5 mins - ADD BASS SOON
@@ -504,8 +548,15 @@ stack(
 **Solution**: Have backups
 ```javascript
 // Multiple approaches ready
-const planA = /* Complex pattern */;
-const planB = /* Simpler version */;
+const planA = stack(
+  sound("bd*4").gain(0.9),
+  note("c1*8").s("bass").release(0.1),
+  sound("hh*16").euclid(11, 16)
+);  // Complex pattern
+const planB = stack(
+  sound("bd*4"),
+  note("c1*4").s("bass")
+);  // Simpler version
 const planC = sound("bd*4").cpm(130);  // Ultra-safe
 ```
 

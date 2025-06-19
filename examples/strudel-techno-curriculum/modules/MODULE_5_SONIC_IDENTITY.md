@@ -30,25 +30,25 @@ note("c3").s("supersaw")
   .detune(0.2)  // Detune amount
   .spread(0.8)  // Stereo spread
 
-// Organ: Additive synthesis
+// Organ: Classic organ sound
 note("c3").s("organ")
-  .harmonics("[1, 0.5, 0.25, 0.125, 0.0625]")  // Harmonic amplitudes
+  // Note: organ oscillator has built-in harmonics
 ```
 
 ### Filter Types and Character
 
 ```javascript
 // Classic lowpass
-.lpf(1000).resonance(10)
+note("c3").s("sawtooth").lpf(1000).resonance(10)
 
 // Moog ladder filter emulation
-.lpf(1000).resonance(20).ftype("ladder")
+note("c3").s("sawtooth").lpf(1000).resonance(20).ftype("ladder")
 
 // Bandpass for focused sounds
-.bpf(1000).bpq(5)
+note("c3").s("sawtooth").bpf(1000).bpq(5)
 
 // Highpass for removing low end
-.hpf(500)
+note("c3").s("sawtooth").hpf(500)
 ```
 
 ## Sound Design Studies
@@ -140,7 +140,6 @@ const rroseTexture = stack(
     
   // Harmonic layer
   note("c2").s("organ")
-    .harmonics("[1, 0, 0.5, 0, 0.25, 0, 0, 0.125]")
     .lpf(sine.range(200, 800).slow(64))
     .gain(0.3),
     
@@ -261,11 +260,12 @@ const aggressiveLead = note("c4*8")
 ```javascript
 // Rhythmic filter patterns
 note("c2")
-  .s("saw")
+  .s("sawtooth")
   .lpf("200 1000 200 2000".fast(4))
   .resonance(20)
   .sustain(1)
   .gain(0.6)
+  .cpm(130)
 ```
 
 ### 2. Vowel Filtering
@@ -273,7 +273,7 @@ note("c2")
 ```javascript
 // Formant/vowel sounds
 note("c3*8")
-  .s("saw")
+  .s("sawtooth")
   .vowel("<a e i o u>")
   .gain(0.5)
 ```
@@ -283,7 +283,7 @@ note("c3*8")
 ```javascript
 // Bandpass sweep with resonance
 note("c2")
-  .s("saw")
+  .s("sawtooth")
   .bpf(sine.range(200, 2000).slow(8))
   .bpq(sine.range(1, 20).slow(16))
   .gain(0.6)
@@ -294,7 +294,7 @@ note("c2")
 ```javascript
 // Filter becomes sound source at high resonance
 note("c3*8")
-  .s("saw")
+  .s("sawtooth")
   .lpf(sine.range(200, 1000).slow(4))
   .resonance(40)  // Self-oscillation
   .gain(0.4)
@@ -307,7 +307,7 @@ note("c3*8")
 ```javascript
 // --- BASS SOUNDS ---
 const subBass = note("c1*8").s("sine").lpf(80).release(0.1);
-const acidBass = note("c1*8").s("saw").lpf(500).resonance(20);
+const acidBass = note("c1*8").s("sawtooth").lpf(500).resonance(20);
 const fmBass = note("c1*8").s("fm4").fmi(2).fmh(1);
 
 // --- LEAD SOUNDS ---
@@ -353,7 +353,7 @@ Create patterns using only filter modulation:
 ```javascript
 // Single note, all movement from filter
 note("c2")
-  .s("saw")
+  .s("sawtooth")
   .sustain(1)
   .lpf(sine.range(100, 3000).segment(16))
   .resonance(cosine.range(0, 30).slow(4))
@@ -396,7 +396,7 @@ Sometimes more is more:
 **Solution**: Layer multiple oscillators
 ```javascript
 stack(
-  note("c3").s("saw").lpf(500),
+  note("c3").s("sawtooth").lpf(500),
   note("c3").s("square").lpf(300).detune(0.1),
   note("c2").s("sine").gain(0.5)
 ).gain(0.6)
@@ -417,7 +417,7 @@ note("c3").s("fm4")
 ### Problem: Sounds don't cut through mix
 **Solution**: Frequency focusing and distortion
 ```javascript
-note("c4").s("saw")
+note("c4").s("sawtooth")
   .hpf(200)   // Remove unnecessary lows
   .lpf(3000)  // Focus frequency range
   .resonance(15)  // Boost presence

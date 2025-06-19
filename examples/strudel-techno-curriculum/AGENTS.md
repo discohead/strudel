@@ -44,10 +44,19 @@ strudel-techno-curriculum/
 When helping with this project:
 
 1. **Maintain the aesthetic**: All code should produce hypnotic, minimal techno
-2. **Test all code**: Every example must be runnable in Strudel
-3. **Follow patterns**: Use existing modules as templates
-4. **Think musically**: Technical accuracy must serve musical goals
-5. **Reference artists**: Connect techniques to real techno producers
+2. **Validate all code**: Use `node ../../packages/transpiler/validate.mjs` before inclusion
+3. **Test all code**: Every example must be runnable in Strudel
+4. **Follow patterns**: Use existing modules as templates
+5. **Think musically**: Technical accuracy must serve musical goals
+6. **Reference artists**: Connect techniques to real techno producers
+
+### Code Validation Requirement
+**CRITICAL**: All Strudel code must be validated before inclusion:
+```bash
+# From this directory
+node ../../packages/transpiler/validate.mjs 's("bd*4").gain(0.9)'
+# Should output: ✓ Valid Strudel code
+```
 
 ### Code Style Example
 
@@ -87,10 +96,23 @@ When creating new modules or content:
 
 ### Quality Standards
 
+- **Validated**: All code must pass validation tool
 - **Musical**: Must sound professional at 120-140 BPM
 - **Technical**: Clean, efficient, well-commented code
 - **Educational**: Clear progression from simple to complex
 - **Practical**: Immediately usable in performance
+
+### Validation Examples
+```bash
+# Simple pattern
+node ../../packages/transpiler/validate.mjs 's("bd sd")'
+
+# Complex stack
+node ../../packages/transpiler/validate.mjs 'stack(s("bd*4"), s("hh*8").euclid(11,16))'
+
+# With effects
+node ../../packages/transpiler/validate.mjs 's("bd").room(0.5).delay(0.125).cpm(130)'
+```
 
 ## Key Strudel Concepts for Techno
 
@@ -98,7 +120,7 @@ When creating new modules or content:
 ```javascript
 // Pattern creation
 sound("bd*4")              // Sample playback
-note("c3").s("saw")        // Synthesized notes
+note("c3").s("sawtooth")        // Synthesized notes
 
 // Rhythm
 .euclid(5, 8)             // Euclidean rhythms
@@ -126,9 +148,16 @@ note("c3").s("saw")        // Synthesized notes
 2. Research 3-5 artists who exemplify it
 3. Create learning objectives (5 specific skills)
 4. Write 10+ code examples progressing in complexity
-5. Design 3 practical exercises
-6. Create assessment criteria
-7. Write module assignment
+5. **Validate all code examples with validation tool**
+6. Design 3 practical exercises
+7. Create assessment criteria
+8. Write module assignment
+
+#### Validation Workflow
+```bash
+# Before adding any code to a module:
+node ../../packages/transpiler/validate.mjs 'your_pattern_here'
+```
 
 ### Improving Existing Modules
 

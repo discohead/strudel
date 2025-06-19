@@ -103,10 +103,21 @@ stack(
 
 ### Quality Checks
 - All code must run without errors
+- **IMPORTANT: Always validate code using `node ../../packages/transpiler/validate.mjs "<code>"`**
 - Patterns must sound professional
 - Examples should be under 20 lines
 - Comments explain "why" not "what"
 - Each module builds on previous knowledge
+
+### Code Validation Process
+Before including any Strudel code in modules or examples:
+```bash
+# Navigate to project root
+cd ../..
+# Validate the pattern
+node packages/transpiler/validate.mjs 's("bd*4").gain(0.9)'
+# Should output: ✓ Valid Strudel code
+```
 
 ## Technical Specifications
 
@@ -136,8 +147,18 @@ This curriculum aims to become:
 - Follow existing module structure
 - Include at least 10 code examples
 - Reference real artists/tracks
-- Test all code extensively
+- Test all code extensively using validation tool
 - Add to the module index
+
+### Validation Requirement
+**All code examples MUST be validated before inclusion:**
+```javascript
+// Example pattern to validate
+const pattern = 'stack(s("bd*4"), s("hh*8")).cpm(130)';
+
+// Run validation from project root
+// node packages/transpiler/validate.mjs 'stack(s("bd*4"), s("hh*8")).cpm(130)'
+```
 
 ### For Improvements
 - Preserve original intent

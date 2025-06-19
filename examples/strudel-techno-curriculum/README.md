@@ -75,7 +75,7 @@ stack(
   
   // Minimal bassline
   note("c1 ~ c1 c1 ~ c1 ~ c1")
-    .s("saw")
+    .s("sawtooth")
     .lpf(400)
     .release(0.1)
     .gain(0.7),

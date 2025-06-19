@@ -114,7 +114,7 @@ const fullPattern = stack(
   sound("hh*16").euclid(11, 16).gain(0.4),
   
   // Bass
-  note("c1*8").s("saw").lpf(400).release(0.1).gain(0.7),
+  note("c1*8").s("sawtooth").lpf(400).release(0.1).gain(0.7),
   
   // Lead
   note("<c4 eb4 g4>").s("fm4")
@@ -224,12 +224,28 @@ stack(
 
 ## Testing Guidelines
 
+### Code Validation Requirement
+**CRITICAL: All code MUST be validated before inclusion using the Strudel validation tool:**
+
+```bash
+# From project root
+node packages/transpiler/validate.mjs 'your_pattern_here'
+
+# Example validation
+node packages/transpiler/validate.mjs 's("bd*4").gain(0.9)'
+# Output: ✓ Valid Strudel code
+
+# From this directory
+node ../../../packages/transpiler/validate.mjs 'pattern_code'
+```
+
 ### For Each Example
-1. Run in clean Strudel environment
-2. Test at multiple tempos (125, 130, 135, 140)
-3. Check CPU usage
-4. Verify musical quality
-5. Confirm learning objective met
+1. **Validate syntax using validation tool**
+2. Run in clean Strudel environment
+3. Test at multiple tempos (125, 130, 135, 140)
+4. Check CPU usage
+5. Verify musical quality
+6. Confirm learning objective met
 
 ### Performance Testing
 ```javascript
@@ -286,11 +302,25 @@ export const elements = {
 ## Guidelines for AI Assistants
 
 ### When Creating Examples
-1. **Test everything** - Must run without errors
-2. **Sound check** - Must be musically valid
-3. **Progress logically** - Simple to complex
-4. **Document clearly** - Explain the why
-5. **Stay focused** - One concept per example
+1. **Validate first** - Use `node ../../../packages/transpiler/validate.mjs`
+2. **Test everything** - Must run without errors
+3. **Sound check** - Must be musically valid
+4. **Progress logically** - Simple to complex
+5. **Document clearly** - Explain the why
+6. **Stay focused** - One concept per example
+
+### Validation Workflow
+```bash
+# Before adding any example:
+# 1. Write the pattern
+const pattern = 's("bd*4").gain(0.9)';
+
+# 2. Validate it
+node ../../../packages/transpiler/validate.mjs 's("bd*4").gain(0.9)'
+
+# 3. Only include if validation passes
+# ✓ Valid Strudel code
+```
 
 ### Code Style
 ```javascript
@@ -317,6 +347,7 @@ stack(
 
 ## Quality Checklist
 
+- [ ] **Validated with transpiler/validate.mjs**
 - [ ] All code syntax correct
 - [ ] Runs without errors
 - [ ] Sounds professional
@@ -325,6 +356,18 @@ stack(
 - [ ] Follows module progression
 - [ ] References real techno
 - [ ] Performance ready
+
+### Validation Examples
+```bash
+# Validate simple pattern
+node ../../../packages/transpiler/validate.mjs 's("bd sd")'
+
+# Validate complex pattern
+node ../../../packages/transpiler/validate.mjs 'stack(s("bd*4"), s("hh*8").euclid(11,16)).cpm(130)'
+
+# Validate with effects
+node ../../../packages/transpiler/validate.mjs 's("bd").room(0.5).delay(0.125)'
+```
 
 ## Remember
 

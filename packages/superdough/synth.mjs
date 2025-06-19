@@ -362,8 +362,12 @@ export function registerSynthSounds() {
         end,
       );
 
+      // Create final output gain node
+      const outputGain = gainNode(0.3); // Reduce volume to match other synths
+      envGain.connect(outputGain);
+      
       return {
-        node: envGain,
+        node: outputGain,
         stop: (time) => {
           // stop() is used when a pattern changes before the envelope ends
           timeoutNode.stop(time);
@@ -420,7 +424,10 @@ export function registerSynthSounds() {
         for (let c = 0; c < 4; c++) {
           const index = matrix[m]?.[c];
           if (index) {
-            const g = gainNode(frequency * (ratios[c] ?? 1) * index);
+            // FM modulation index controls the modulation depth
+            // modulation_amplitude = index * modulator_frequency
+            const modulatorFreq = frequency * (ratios[m] ?? 1);
+            const g = gainNode(modulatorFreq * index);
             ops[m].osc.connect(g).connect(ops[c].osc.frequency);
           }
         }
@@ -443,8 +450,12 @@ export function registerSynthSounds() {
         end,
       );
 
+      // Create final output gain node  
+      const outputGain = gainNode(0.3); // Reduce volume to match other synths
+      envGain.connect(outputGain);
+      
       return {
-        node: envGain,
+        node: outputGain,
         stop: (time) => {
           timeoutNode.stop(time);
           ops.forEach(({ osc }) => osc.stop(time));

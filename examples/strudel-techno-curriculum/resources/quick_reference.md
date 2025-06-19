@@ -23,7 +23,7 @@ sound("[bd cp]*2")         // Faster subdivision
 ```javascript
 // Sound selection
 sound("bd")               // Sample
-note("c3").s("saw")       // Synth note
+note("c3").s("sawtooth")       // Synth note
 
 // Synthesis parameters
 .attack(0.01)             // Envelope attack
@@ -85,7 +85,7 @@ stack(
 ### Minimal Bassline
 ```javascript
 note("c1 ~ c1 c1 ~ c1 ~ c1")
-  .s("saw")
+  .s("sawtooth")
   .lpf(400)
   .release(0.1)
   .gain(0.7)

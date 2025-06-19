@@ -16,19 +16,37 @@ By the end of this module, you will be able to:
 ### Arrangement Functions
 
 ```javascript
-// Conditional execution
-.every(n, function)         // Apply every n cycles
-.when(condition, function)  // Apply when condition is true
-.while(condition, function) // Apply while condition is true
+// Conditional execution examples
+note("c3 eb3 g3 bb3")
+  .every(4, x => x.rev())         // Reverse every 4 cycles
+  .s("fm").cpm(130)
 
-// Sequencing
-cat(...patterns)           // Play patterns sequentially
-seq(...values)            // Sequence values
-stack(...patterns)        // Layer patterns
+note("c3*8")
+  .when(x => x.cycle > 8, x => x.gain(0.8))  // Apply after 8 cycles
+  .s("bass").cpm(130)
+
+// Sequencing examples
+cat(
+  sound("bd*4"),           // Play first
+  sound("bd cp*2")         // Then this
+).cpm(130)
+
+seq("c3", "eb3", "g3", "bb3")  // Sequence notes
+  .s("bass").cpm(130)
+
+stack(
+  sound("bd*4"),           // Layer together
+  sound("hh*8")
+).cpm(130)
 
 // Time-based conditions
-.early(cycles)            // Shift earlier in time
-.late(cycles)             // Shift later in time
+sound("cp").struct("~ x ~ x")
+  .early(0.01)            // Shift 0.01 cycles earlier
+  .cpm(130)
+
+sound("hh*16")
+  .late(0.005)            // Shift 0.005 cycles later
+  .cpm(130)
 ```
 
 ### Code Organization
@@ -81,7 +99,7 @@ Start full and remove elements:
 // All elements defined
 const elements = {
   kick: sound("bd*4").gain(0.9),
-  bass: note("c1*8").s("saw").lpf(400).release(0.1).gain(0.7),
+  bass: note("c1*8").s("sawtooth").lpf(400).release(0.1).gain(0.7),
   hats: sound("hh*16").euclid(11, 16).gain(0.4),
   clap: sound("~ cp ~ cp").gain(0.7),
   lead: note("<c4 eb4 g4>").s("fm4").release(0.1).gain(0.5)
@@ -384,8 +402,10 @@ Prepare code for live manipulation:
 **Solution**: Use gradual parameter changes
 ```javascript
 // Smooth 4-bar transition
-.gain(slow(4, line(0, 1)))
-.lpf(slow(4, line(200, 2000)))
+note("c3*8").s("bass")
+  .gain(slow(4, saw.range(0, 1)))
+  .lpf(slow(4, saw.range(200, 2000)))
+  .cpm(130)
 ```
 
 ### Problem: Energy drops in middle

@@ -17,20 +17,20 @@ By the end of this module, you will be able to:
 
 ```javascript
 // Delay parameters
-.delay(0.5)              // Wet/dry mix (0-1)
-.delaytime(0.375)        // Delay time (in cycles)
-.delayfeedback(0.7)      // Feedback amount (0-0.99)
+note("c3").s("sawtooth").delay(0.5)              // Wet/dry mix (0-1)
+note("c3").s("sawtooth").delaytime(0.375)        // Delay time (in cycles)
+note("c3").s("sawtooth").delayfeedback(0.7)      // Feedback amount (0-0.99)
 
 // Reverb parameters
-.room(0.5)               // Reverb mix (0-1)
-.roomsize(0.8)           // Room size (0-1)
-.roomfade(2)             // Reverb decay time
-.roomlp(10000)           // Reverb lowpass filter
-.roomdim(0.5)            // Reverb diffusion
+note("c3").s("sawtooth").room(0.5)               // Reverb mix (0-1)
+note("c3").s("sawtooth").roomsize(0.8)           // Room size (0-1)
+note("c3").s("sawtooth").roomfade(2)             // Reverb decay time
+note("c3").s("sawtooth").roomlp(10000)           // Reverb lowpass filter
+note("c3").s("sawtooth").roomdim(0.5)            // Reverb diffusion
 
 // Filters for effects
-.lpf(1000)               // Applied to entire signal
-.djf(0.5)                // DJ filter (0=LP, 0.5=flat, 1=HP)
+note("c3").s("sawtooth").lpf(1000)               // Applied to entire signal
+note("c3").s("sawtooth").djf(0.5)                // DJ filter (0=LP, 0.5=flat, 1=HP)
 ```
 
 ### Delay Mathematics
@@ -46,9 +46,9 @@ Understanding delay timing for rhythmic effects:
 // 3/4 = 0.75    (dotted half)
 
 // Musical delay times
-.delaytime(0.375)  // Dotted eighth (classic dub)
-.delaytime(0.667)  // Triplet (polyrhythmic feel)
-.delaytime(1.5)    // Bar and a half (long echo)
+note("c3").s("sawtooth").delaytime(0.375)  // Dotted eighth (classic dub)
+note("c3").s("sawtooth").delaytime(0.667)  // Triplet (polyrhythmic feel)
+note("c3").s("sawtooth").delaytime(1.5)    // Bar and a half (long echo)
 ```
 
 ## Dub Techno Techniques
@@ -437,19 +437,25 @@ const feedback = note("c3")
 **Solution**: Filter the delay return
 ```javascript
 // High-pass filtered delay
-.delay(0.7)
-.delaytime(0.375)
-.hpf(300)  // Remove low frequencies from delays
-.lpf(5000)  // Also remove extreme highs
+sound("cp")
+  .struct("~ x ~ x")
+  .delay(0.7)
+  .delaytime(0.375)
+  .hpf(300)  // Remove low frequencies from delays
+  .lpf(5000)  // Also remove extreme highs
 ```
 
 ### Problem: Feedback gets out of control
 **Solution**: Limit feedback and add compression
 ```javascript
 // Safe feedback setup
-.delayfeedback(Math.min(x, 0.9))  // Hard limit
-.shape(0.3)  // Soft compression
-.gain(0.6)   // Lower overall level
+sound("hh")
+  .struct("x*8")
+  .delay(0.8)
+  .delaytime(0.375)
+  .delayfeedback(0.89)  // Keep below 0.9
+  .shape(0.3)  // Soft compression
+  .gain(0.6)   // Lower overall level
 ```
 
 ### Problem: Effects sound separate from dry signal
@@ -457,7 +463,7 @@ const feedback = note("c3")
 ```javascript
 // Unified sound
 const unified = note("c3")
-  .s("saw")
+  .s("sawtooth")
   .stack(
     x => x.gain(0.6),  // Dry signal
     x => x.delay(1).delaytime(0.375).gain(0.4)  // Wet signal

@@ -120,7 +120,7 @@ stack(
 stack(
   sound("bd*4").gain(0.9),
   note("c1 ~ c1 c1 ~ c1 ~ c1")
-    .s("saw")
+    .s("sawtooth")
     .lpf(400)
     .resonance(0.3)
     .attack(0.01)

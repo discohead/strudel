@@ -39,11 +39,20 @@ stack(
 ```
 
 ### Quality Requirements
-1. **Every example must run** - No syntax errors
-2. **Musical output** - Must sound good at specified tempo
-3. **Clear progression** - Simple → Complex
-4. **Well commented** - Explain the "why"
-5. **Techno appropriate** - Fits the aesthetic
+1. **Validated first** - Must pass `node ../../../packages/transpiler/validate.mjs`
+2. **Every example must run** - No syntax errors
+3. **Musical output** - Must sound good at specified tempo
+4. **Clear progression** - Simple → Complex
+5. **Well commented** - Explain the "why"
+6. **Techno appropriate** - Fits the aesthetic
+
+### Validation Process
+**CRITICAL**: Validate all code before inclusion:
+```bash
+# From this examples directory
+node ../../../packages/transpiler/validate.mjs 's("bd*4").gain(0.9)'
+# Should output: ✓ Valid Strudel code
+```
 
 ## Creating New Examples
 
@@ -186,15 +195,34 @@ stack(
 // Note the rest on beat 2 creating forward momentum
 ```
 
+### 6. Validation Phase
+```bash
+# Always validate before committing
+node ../../../packages/transpiler/validate.mjs 'sound("bd ~ bd bd ~ bd ~ bd").gain("0.9 0 0.85 0.9 0 0.8 0 0.85").shape(0.1).cpm(132)'
+```
+
 ## Testing Examples
 
 ### Checklist for Each Example
+- [ ] **Validated with transpiler/validate.mjs**
 - [ ] Runs without errors
 - [ ] Sounds good at intended BPM
 - [ ] Demonstrates intended concept
 - [ ] Has clear comments
 - [ ] Follows code style
 - [ ] Is musically useful
+
+### Validation Commands
+```bash
+# Validate simple patterns
+node ../../../packages/transpiler/validate.mjs 's("bd*4")'
+
+# Validate complex stacks
+node ../../../packages/transpiler/validate.mjs 'stack(s("bd*4"), s("hh*8").euclid(11,16)).cpm(130)'
+
+# Validate with effects
+node ../../../packages/transpiler/validate.mjs 'note("c1*8").s("bass").lpf(400).release(0.1)'
+```
 
 ### Performance Testing
 ```javascript
@@ -258,10 +286,22 @@ export const bank = {
 
 ### Adding Examples
 1. Follow existing structure
-2. Test thoroughly
-3. Include performance notes
-4. Reference source inspiration
-5. Keep under 50 lines per example
+2. **Validate with transpiler/validate.mjs**
+3. Test thoroughly
+4. Include performance notes
+5. Reference source inspiration
+6. Keep under 50 lines per example
+
+### Example Validation Workflow
+```bash
+# Write your example
+const myPattern = 'stack(s("bd*4"), s("hh*8")).cpm(130)';
+
+# Validate it
+node ../../../packages/transpiler/validate.mjs 'stack(s("bd*4"), s("hh*8")).cpm(130)'
+
+# Only add to file if validation passes
+```
 
 ### Improving Examples
 1. Preserve original intent
